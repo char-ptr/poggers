@@ -11,7 +11,7 @@ impl Process {
         Process {
             handl: windows::Win32::Foundation::HANDLE(0),
             pid,
-            name,
+            name: "".to_string(),
         }
     }
     fn new_from_name(name: String) -> Process {
