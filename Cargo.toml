@@ -2,11 +2,13 @@
 name = "poggers"
 version = "0.1.0"
 edition = "2021"
+description = "memory lib"
+license = "GNU General Public License v2.0"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-windows = {version = "0.39.0",features = [
+window = {version = "0.40.0",features = [
     "Win32_Foundation"
 ], optional = true}
 
