@@ -6,7 +6,7 @@ use windows::Win32::{
     Foundation::{CloseHandle, GetLastError, HANDLE, HINSTANCE, MAX_PATH},
     System::{
         Diagnostics::{
-            Debug::{WriteProcessMemory, ReadProcessMemory},
+            Debug::{ReadProcessMemory, WriteProcessMemory},
             ToolHelp::{
                 CreateToolhelp32Snapshot, Process32First, Process32Next,
                 Toolhelp32ReadProcessMemory, PROCESSENTRY32, TH32CS_SNAPPROCESS,
@@ -42,7 +42,6 @@ impl<'a> Process {
         })
     }
     pub fn new_from_name(name: String) -> Result<Process> {
-
         let pid = Self::get_pid_from_name(&name)?;
         let handle = Self::open_handle(pid)?;
 
@@ -144,12 +143,11 @@ impl<'a> Process {
         Ok(ptr)
     }
 
-    pub fn read<T : Default>(&self, addr: usize) -> Result<T> {
+    pub fn read<T: Default>(&self, addr: usize) -> Result<T> {
         let t_size = std::mem::size_of::<T>();
         let mut buffer: T = Default::default();
 
-        let old_prot =
-            self.change_protection(addr, t_size, PAGE_EXECUTE_READWRITE)?;
+        let old_prot = self.change_protection(addr, t_size, PAGE_EXECUTE_READWRITE)?;
 
         let res = unsafe {
             ReadProcessMemory(
@@ -159,7 +157,6 @@ impl<'a> Process {
                 t_size,
                 &mut 0,
             )
-
         };
 
         let _ = self.change_protection(addr, t_size, old_prot);
@@ -170,11 +167,10 @@ impl<'a> Process {
             Err(ProcessError::UnableToReadMemory(addr as usize).into())
         }
     }
-    pub fn read_sized(&self, addr: usize,size:usize) -> Result<Vec<u8>> {
-        let mut buffer = vec![0;size];
+    pub fn read_sized(&self, addr: usize, size: usize) -> Result<Vec<u8>> {
+        let mut buffer = vec![0; size];
 
-        let old_prot =
-            self.change_protection(addr, size, PAGE_EXECUTE_READWRITE)?;
+        let old_prot = self.change_protection(addr, size, PAGE_EXECUTE_READWRITE)?;
         let res = unsafe {
             ReadProcessMemory(
                 self.handl,
@@ -183,7 +179,6 @@ impl<'a> Process {
                 size,
                 &mut 0,
             )
-
         };
 
         let _ = self.change_protection(addr, size, old_prot)?;
@@ -244,11 +239,9 @@ impl<'a> Process {
         }
     }
 
-
     pub fn get_base_module(&'a self) -> Result<Module<'a>> {
         Module::new(&self.name, self)
     }
-
 }
 #[derive(Debug)]
 pub enum StringOru32 {
