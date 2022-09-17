@@ -1,5 +1,5 @@
 use std::{ffi::c_void, fmt::Display, error::Error};
-use anyhow::{Context, Result};
+use anyhow::{Context, Result, Ok};
 use thiserror::Error;
 
 use windows::Win32::{Foundation::{CloseHandle, MAX_PATH, HINSTANCE, HANDLE, GetLastError}, System::{LibraryLoader::GetModuleFileNameW, Threading::{OpenProcess, PROCESS_QUERY_INFORMATION, PROCESS_VM_READ, PROCESS_ALL_ACCESS}, Diagnostics::{ToolHelp::{CreateToolhelp32Snapshot, TH32CS_SNAPPROCESS, PROCESSENTRY32, Process32Next, Process32First, Toolhelp32ReadProcessMemory}, Debug::WriteProcessMemory}, Memory::{VirtualProtectEx, PAGE_PROTECTION_FLAGS, PAGE_READONLY, PAGE_READWRITE, PAGE_EXECUTE_READWRITE}, ProcessStatus::K32GetModuleFileNameExW}};
@@ -91,6 +91,15 @@ impl<'a> Process {
         } else {
             Ok(hndl)
         }
+    }
+
+    pub fn solve_dma(&self, addr: usize, offsets: Vec<usize>) -> Result<usize> {
+        let mut ptr = addr;
+        for offset in offsets {
+            ptr = self.read::<usize>(addr).unwrap();
+            ptr += offset;
+        } 
+        Ok(ptr)
     }
 
     pub fn read<T : Default>(&self, addr:usize) -> Result<T> {
