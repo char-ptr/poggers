@@ -70,29 +70,38 @@ impl<'a> Module<'a> {
 
     pub fn scan_virtual(&self,pattern:&str) -> Option<usize> {
         let mut mem_info : MEMORY_BASIC_INFORMATION = Default::default();
-        mem_info.RegionSize = 4096;
+        mem_info.RegionSize = 0x4096;
 
         println!("{} -> {}",self.base_address,self.size);
 
-        for i in (self.base_address..self.base_address + self.size).step_by(mem_info.RegionSize) {
+        let mut addr = self.base_address;
+
+        loop {
+
+            if addr >= self.base_address + self.size {
+                break;
+            }
+
             let worky = unsafe {
-                VirtualQueryEx(self.process.handl, i as *const c_void, &mut mem_info, std::mem::size_of::<MEMORY_BASIC_INFORMATION>())
+                VirtualQueryEx(self.process.handl, addr as *const c_void, &mut mem_info, std::mem::size_of::<MEMORY_BASIC_INFORMATION>())
             };
             if mem_info.State != MEM_COMMIT || mem_info.Protect == PAGE_NOACCESS {
-                println!("skipping");
+                addr += mem_info.RegionSize as usize;
                 continue;
             }
 
-            println!("{:?}",mem_info);
+            let page  = self.process.read_sized(addr,mem_info.RegionSize-1).ok()?;
 
-            let scan_res = self.scan(pattern, i, mem_info.RegionSize);
+            let scan_res = self.scan_batch(pattern, &page);
 
-            if scan_res.is_some() {
+            if let Some(result) = scan_res {
                 println!("Found pattern at {:#x}",scan_res.unwrap());
-                return scan_res;
+                return Some(addr + result);
             }
+            addr += mem_info.RegionSize as usize;
         }
         None
+
     }
     
 }
