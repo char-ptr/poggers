@@ -42,6 +42,7 @@ impl<'a> Process {
         })
     }
     pub fn new_from_name(name: String) -> Result<Process> {
+
         let pid = Self::get_pid_from_name(&name)?;
         let handle = Self::open_handle(pid)?;
 
@@ -134,6 +135,15 @@ impl<'a> Process {
         }
     }
 
+    pub fn solve_dma(&self, addr: usize, offsets: Vec<usize>) -> Result<usize> {
+        let mut ptr = addr;
+        for offset in offsets {
+            ptr = self.read::<usize>(addr).unwrap();
+            ptr += offset;
+        }
+        Ok(ptr)
+    }
+
     pub fn read<T : Default>(&self, addr: usize) -> Result<T> {
         let t_size = std::mem::size_of::<T>();
         let mut buffer: T = Default::default();
@@ -149,7 +159,7 @@ impl<'a> Process {
                 std::mem::size_of::<T>(),
                 &mut 0,
             )
-            
+
         };
 
         let _ = self.change_protection(addr, std::mem::size_of::<T>(), old_prot);
@@ -173,7 +183,7 @@ impl<'a> Process {
                 size,
                 &mut 0,
             )
-            
+
         };
 
         let _ = self.change_protection(addr, size, old_prot)?;
@@ -234,9 +244,11 @@ impl<'a> Process {
         }
     }
 
+
     pub fn get_base_module(&'a self) -> Result<Module<'a>> {
         Module::new(&self.name, self)
     }
+
 }
 #[derive(Debug)]
 pub enum StringOru32 {
