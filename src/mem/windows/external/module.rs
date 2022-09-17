@@ -58,7 +58,6 @@ impl<'a> Module<'a> {
         if result.is_none() {
             return Err(ModuleError::NoModuleFound(name.to_string()).into());
         }
-        
         Ok(Self {
             process: proc,
             base_address: me.modBaseAddr as usize,
@@ -102,6 +101,16 @@ impl<'a> Module<'a> {
         }
         None
 
+    }
+
+    pub fn get_relative(&self,addr:usize) -> usize {
+        addr - self.base_address
+    }
+
+    pub fn resolve_relative_ptr(&self,addr:usize,offset:u32) -> Result<usize> {
+        let real_offset = self.process.read::<u32>(addr + offset as usize)?;
+        println!("Real offset: {:X?}",real_offset);
+        Ok(self.base_address + (self.get_relative(addr) + real_offset as usize))
     }
     
 }
@@ -197,15 +206,6 @@ mod tests {
         println!("predicted = {:X} | b = {:X}",base_mod.base_address + 0x43000, base_mod.base_address);
 
         let offset = base_mod.scan_virtual("F3 48 0F 2A C0").unwrap();
-
-        println!("offset = {:X}",offset);
-
-        let read_val = xproc.read::<u32>(offset).unwrap();
-
-        println!("read_val = {:X}",read_val);
-
-        let mut buf = String::new();
-        std::io::stdin().read_line(&mut buf).unwrap();
         
     }
 }

@@ -149,20 +149,20 @@ impl<'a> Process {
         let mut buffer: T = Default::default();
 
         let old_prot =
-            self.change_protection(addr, std::mem::size_of::<T>(), PAGE_EXECUTE_READWRITE)?;
+            self.change_protection(addr, t_size, PAGE_EXECUTE_READWRITE)?;
 
         let res = unsafe {
-            Toolhelp32ReadProcessMemory(
-                self.pid,
+            ReadProcessMemory(
+                self.handl,
                 addr as *const c_void,
                 &mut buffer as *mut _ as *mut _,
-                std::mem::size_of::<T>(),
+                t_size,
                 &mut 0,
             )
 
         };
 
-        let _ = self.change_protection(addr, std::mem::size_of::<T>(), old_prot);
+        let _ = self.change_protection(addr, t_size, old_prot);
 
         if res.as_bool() {
             Ok(buffer)
