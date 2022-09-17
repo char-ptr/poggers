@@ -138,7 +138,7 @@ impl<'a> Process {
     pub fn solve_dma(&self, addr: usize, offsets: &Vec<usize>) -> Result<usize> {
         let mut ptr = addr;
         for offset in offsets {
-            ptr = self.read::<usize>(addr).unwrap();
+            ptr = self.read::<usize>(addr)?;
             ptr += offset;
         }
         Ok(ptr)
