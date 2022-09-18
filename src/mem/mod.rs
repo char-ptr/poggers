@@ -1,2 +1,3 @@
 pub mod sigscan;
-pub mod windows;
+pub mod external;
+pub mod internal;
