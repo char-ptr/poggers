@@ -6,7 +6,7 @@ pub trait SigScan {
         for i in 0..size {
             let mut okay = true;
             let mut offset = 0;
-            for ci in (0..pattern.len()) {
+            for ci in 0..pattern.len() {
                 let c = &pattern[ci..ci + 1];
                 if c == "?" {
                     offset += 1;
