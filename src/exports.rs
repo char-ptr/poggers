@@ -9,3 +9,5 @@ pub use windows::{
         }
     }
 };
+#[cfg(not(target_os = "windows"))]
+pub use ctor::ctor;

@@ -83,7 +83,7 @@ pub fn create_entry(attr:TokenStream, item:TokenStream) -> TokenStream {
     };
     #[cfg(not(target_os = "windows"))]
     let generated = quote!{
-        #[ctor::ctor]
+        #[#curr_crate::exports::ctor]
         fn lib_init() {
             std::thread::spawn(|| {
 
