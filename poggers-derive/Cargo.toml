@@ -13,7 +13,5 @@ proc-macro2= "1.0.43"
 quote = "1.0.21"
 syn = {version = "1.0.99", features = ["full"]}
 proc-macro-crate = "1.2.1"
-
-[features]
-default = ["win"]
-win = ["windows"]
+[target.'cfg(not(target_os = "windows"))'.dependencies]
+ctor = "0.1.23"

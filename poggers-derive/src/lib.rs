@@ -49,11 +49,18 @@ pub fn create_entry(attr:TokenStream, item:TokenStream) -> TokenStream {
         };
     };
 
+    let cross_platform = quote!{
+        use ::std::panic;
 
-
-    TokenStream::from(quote!{
-        #input
-
+        match panic::catch_unwind(||#input_name()) {
+            Err(e) => {
+                println!("`{}` has panicked: {:#?}",stringify!{#input_name}, e);
+            }
+            Ok(r) => {#handle_ret},
+        };
+    };
+    #[cfg(target_os = "windows")]
+    let generated = quote!{
         #[no_mangle]
         extern "system" fn DllMain(
             h_module : crate::exports::HINSTANCE,
@@ -64,14 +71,7 @@ pub fn create_entry(attr:TokenStream, item:TokenStream) -> TokenStream {
                 crate::exports::DLL_PROCESS_ATTACH => {
                     std::thread::spawn(|| {
                         #alloc_console
-                        use ::std::panic;
-
-                        match panic::catch_unwind(||#input_name()) {
-                            Err(e) => {
-                                println!("`{}` has panicked: {:#?}",stringify!{#input_name}, e);
-                            }
-                            Ok(r) => {#handle_ret},
-                        };
+                        #cross_platform
 
                         #free_console
                     });
@@ -80,5 +80,23 @@ pub fn create_entry(attr:TokenStream, item:TokenStream) -> TokenStream {
                 _ => (false).into()
             }
         }
+    };
+    #[cfg(not(target_os = "windows"))]
+    let generated = quote!{
+        #[ctor::ctor]
+        fn lib_init() {
+            std::thread::spawn(|| {
+
+                #cross_platform
+
+            });
+        }
+    };
+
+
+    TokenStream::from(quote!{
+        #input
+
+        #generated
     })
 }
