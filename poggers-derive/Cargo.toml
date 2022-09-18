@@ -12,9 +12,6 @@ proc-macro = true
 proc-macro2= "1.0.43"
 quote = "1.0.21"
 syn = {version = "1.0.99", features = ["full"]}
-windows = {version = "0.39", features = [
-    "Win32_System_SystemServices", "Win32_Foundation"
-],optional = true}
 proc-macro-crate = "1.2.1"
 
 [features]
