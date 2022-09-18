@@ -6,16 +6,19 @@ description = "memory lib"
 license = "GPL-2.0"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[workspace]
+members = ["poggers-derive"]
 
 [dependencies]
 windows = {version = "0.39.0",features = [
     "Win32_System_Threading","Win32_Foundation","Win32_System_LibraryLoader",
     "Win32_System_Diagnostics_ToolHelp", "Win32_System_Diagnostics_Debug",
-    "Win32_System_Memory", "Win32_System_ProcessStatus"
+    "Win32_System_Memory", "Win32_System_ProcessStatus", "Win32_System_Console"
 ], optional = true}
 anyhow = "1.0.65"
 thiserror = "1.0.35"
 log = "0.4.17"
+poggers-derive = {path="./poggers-derive"}
 [features]
 default = ["win"]
 win = ["windows"]

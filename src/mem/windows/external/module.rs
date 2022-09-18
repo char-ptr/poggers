@@ -88,7 +88,7 @@ impl<'a> Module<'a> {
 
         let mut addr = self.base_address;
 
-        loop {
+        loop { 
             if addr >= self.base_address + self.size {
                 break;
             }
