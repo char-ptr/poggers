@@ -6,7 +6,7 @@ description = "memory lib"
 license = "GPL-2.0"
 authors = ["luna <luna@aixeria.com>","VilotStar <macbookairuser12@priest.com>"]
 repository = "https://github.com/pozm/poggers"
-
+readme = "README.md"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [workspace]
