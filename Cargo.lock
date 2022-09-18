@@ -52,7 +52,7 @@ dependencies = [
 
 [[package]]
 name = "poggers-derive"
-version = "0.1.1-dev"
+version = "0.1.1-dev1"
 dependencies = [
  "ctor",
  "proc-macro-crate",
