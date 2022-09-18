@@ -23,14 +23,21 @@ use windows::Win32::{
 };
 
 use super::module::Module;
+
+/// A Class describing a windows process
 #[derive(Debug)]
 pub struct Process {
     pub(crate) handl: windows::Win32::Foundation::HANDLE,
     pub(crate) pid: u32,
     pub(crate) name: String,
 }
-
 impl<'a> Process {
+    /// Creates a new [`Process`] from a pid
+    /// # Example
+    /// ```
+    /// use mem::process::Process;
+    /// let proc = Process::new(1234).unwrap();
+    /// ```
     pub fn new_from_pid(pid: u32) -> Result<Process> {
         let process_name = Self::get_name_from_pid(pid)?;
         let handle = Self::open_handle(pid)?;
@@ -41,6 +48,12 @@ impl<'a> Process {
             name: process_name,
         })
     }
+    /// create a new [`Process`] from a process name
+    /// # Example
+    /// ```
+    /// use mem::process::Process;
+    /// let process = Process::new("csgo.exe").unwrap();
+    /// ```
     pub fn new_from_name(name: String) -> Result<Process> {
         let pid = Self::get_pid_from_name(&name)?;
         let handle = Self::open_handle(pid)?;
@@ -133,7 +146,15 @@ impl<'a> Process {
             Ok(hndl)
         }
     }
-
+    /// Resolve a vector of pointers to a single address
+    /// # arguments
+    /// * addr - the base address
+    /// * offsets - a vector of offsets
+    /// # example
+    /// ```
+    /// let mut process = Process::new_from_name("notepad.exe".to_string()).unwrap();
+    /// let addr = process.solve_dma(0x12345678, vec![0x0, 0x4, 0x8]).unwrap();
+    /// ```
     pub fn solve_dma(&self, addr: usize, offsets: &Vec<usize>) -> Result<usize> {
         let mut ptr = addr;
         for offset in offsets {
@@ -142,7 +163,18 @@ impl<'a> Process {
         }
         Ok(ptr)
     }
-
+    /// Read from process memory
+    /// # Arguments
+    /// * `addr` - The address to read from.
+    /// ## Information
+    /// you provide a generic and the size of the generic will be calculated using [`std::mem::size_of`], if you want to specify the size use [`Self::read_sized`]
+    /// # Example
+    /// ```
+    /// use poggers::process::Process;
+    /// let process = Process::new_from_name("notepad.exe".to_string()).unwrap();
+    /// let value = process.read::<u32>(0x12345678).unwrap();
+    /// ```
+    /// 
     pub fn read<T: Default>(&self, addr: usize) -> Result<T> {
         let t_size = std::mem::size_of::<T>();
         let mut buffer: T = Default::default();
@@ -167,6 +199,18 @@ impl<'a> Process {
             Err(ProcessError::UnableToReadMemory(addr as usize).into())
         }
     }
+    /// Read a set amount from process memory
+    /// this is like [`Self::read`] but you can specify the size and it will return a vector of bytes
+    /// # Arguments
+    /// * `addr` - The address to read from.
+    /// * `size` - The size of the buffer to read
+    /// # Example
+    /// ```
+    /// use poggers::process::Process;
+    /// let process = Process::new_from_name("notepad.exe".to_string()).unwrap();
+    /// let value = process.read_sized(0x12345678, 0x100).unwrap();
+    /// ```
+    /// 
     pub fn read_sized(&self, addr: usize, size: usize) -> Result<Vec<u8>> {
         let mut buffer = vec![0; size];
 
@@ -189,9 +233,19 @@ impl<'a> Process {
             Err(ProcessError::UnableToReadMemory(addr as usize).into())
         }
     }
-
+    /// Write to process memory
+    /// # Arguments
+    /// * `addr` - The address to write to.
+    /// * `data` - The value to write.
+    /// # Example
+    /// ```
+    /// use poggers::process::Process;
+    /// let mut process = Process::new_from_name("notepad.exe".to_string()).unwrap();
+    /// process.write::<u32>(0x12345678, 0x1337).unwrap();
+    /// ```
+    /// 
     pub fn write<T>(&self, addr: usize, data: &T) -> Result<()> {
-        let old_prot = self.change_protection(addr, std::mem::size_of::<T>(), PAGE_READWRITE)?;
+        let old_prot = self.change_protection(addr, std::mem::size_of::<T>(), PAGE_EXECUTE_READWRITE)?;
         let d = unsafe {
             let d = std::mem::transmute::<&T, *const c_void>(data);
             WriteProcessMemory(
@@ -211,6 +265,17 @@ impl<'a> Process {
             Err(ProcessError::UnableToWriteMemory(addr as usize).into())
         }
     }
+    /// Alters the protection on the specified address and returns the old protection
+    /// # Arguments
+    /// * `addr` - The address to change the protection on.
+    /// * `size` - The size of the region to change the protection on.
+    /// * `prot` - The new protection to set.
+    /// # Example
+    /// ```
+    /// use poggers::process::Process;
+    /// let mut process = Process::new_from_name("notepad.exe".to_string()).unwrap();
+    /// let old_prot = process.change_protection(0x12345678, 0x100, windows::Windows::Win32::System::Memory::PAGE_EXECUTE_READWRITE).unwrap();
+    /// ```
     pub fn change_protection(
         &self,
         addr: usize,
@@ -238,7 +303,15 @@ impl<'a> Process {
             Err(ProcessError::UnableToChangeProtection(addr as usize).into())
         }
     }
-
+    /// Get the base module of the process (name.exe module)
+    /// # Return
+    /// * [Result]<[Module]> - The base module of the process
+    /// # Example
+    /// ```
+    /// use poggers::process::Process;
+    /// let mut process = Process::new_from_name("notepad.exe".to_string()).unwrap();
+    /// let base_module = process.get_base_module().unwrap();
+    /// ```
     pub fn get_base_module(&'a self) -> Result<Module<'a>> {
         Module::new(&self.name, self)
     }
@@ -256,19 +329,25 @@ impl Display for StringOru32 {
         }
     }
 }
-
+/// An error that can occur when interacting with a process
 #[derive(Debug, Error)]
 pub enum ProcessError {
+    /// unable to open a handle to the process
     #[error("Unable open process with pid or name of '{0}'")]
     UnableToOpenProcess(StringOru32),
-    #[error("Unable pid '{0}' does not exist")]
+    /// the pid specified is invalid
+    #[error("pid '{0}' does not exist")]
     InvalidPid(u32),
+    /// process cannot be found with name
     #[error("unable to find any process with pid or name of '{0}'")]
     NoProcessFound(StringOru32),
+    /// unable to read memory from the process
     #[error("unable to read memory @ {0:X}")]
     UnableToReadMemory(usize),
+    /// unable to write memory to the process
     #[error("unable to write memory @ {0:X}")]
     UnableToWriteMemory(usize),
+    /// unable to change the protection of the memory
     #[error("unable to change memory protection @ {0:X}")]
     UnableToChangeProtection(usize),
 }

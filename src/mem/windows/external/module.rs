@@ -20,6 +20,8 @@ use super::process::Process;
 use anyhow::{Context, Result};
 use thiserror::Error;
 
+
+/// A module in a process.
 #[derive(Debug)]
 pub struct Module<'a> {
     pub(crate) process: &'a Process,
@@ -30,6 +32,20 @@ pub struct Module<'a> {
 }
 
 impl<'a> Module<'a> {
+    /// create a new module object from a process and a module name.
+    /// # Arguments
+    /// * `name` - The name of the module to find.
+    /// * `process` - The process to find the module in.
+    /// # Example
+    /// ```
+    /// use poggers::mem::process::Process;
+    /// use poggers::mem::module::Module;
+    /// let process = Process::new("notepad.exe").unwrap();
+    /// let module = Module::new("user32.dll", &process).unwrap();
+    /// ```
+    /// # Errors
+    /// * [`ModuleError::NoModuleFound`] - The module was not found in the process.
+    /// * [`ModuleError::UnableToOpenHandle`] - The module handle could not be retrieved.
     pub fn new(name: &str, proc: &'a Process) -> Result<Self> {
         let mut me: MODULEENTRY32 = Default::default();
         me.dwSize = std::mem::size_of::<MODULEENTRY32>() as u32;
@@ -80,6 +96,18 @@ impl<'a> Module<'a> {
         })
     }
 
+    /// Pattern scan this module to find an address
+    /// # Arguments
+    /// * `pattern` - The pattern to scan for (IDA Style).
+    /// # Example
+    /// ```
+    /// use poggers::mem::process::Process;
+    /// use poggers::mem::module::Module;
+    /// let process = Process::new("notepad.exe").unwrap();
+    /// let module = Module::new("user32.dll", &process).unwrap();
+    /// let address = module.pattern_scan("48 8B 05 ? ? ? ? 48 8B 88 ? ? ? ? 48 85 C9 74 0A").unwrap();
+    /// ```
+    /// 
     pub fn scan_virtual(&self, pattern: &str) -> Option<usize> {
         let mut mem_info: MEMORY_BASIC_INFORMATION = Default::default();
         mem_info.RegionSize = 0x4096;

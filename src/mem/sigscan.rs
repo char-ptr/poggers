@@ -1,7 +1,17 @@
 use anyhow::Result;
 
+/// The trait which allows a class to sig scan.
+/// * [`Self::scan`] will read for each byte in the size
+/// * [`Self::scan_batch`] will take a vector of a page and will not make additional read calls (better for external.)
 pub trait SigScan {
     fn read<T: Default>(&self, addr: usize) -> Result<T>;
+    /// Scans for a pattern in the process.
+    /// # Arguments
+    /// * `pattern` - The pattern to scan for.
+    /// * `from` - The address to start scanning from.
+    /// * `size` - The size of the region to scan.
+    /// # Returns
+    /// * [Option<usize>] - The address which has been found.
     fn scan(&self, pattern: &str, from: usize, size: usize) -> Option<usize> {
         for i in 0..size {
             let mut okay = true;
@@ -40,6 +50,12 @@ pub trait SigScan {
         }
         None
     }
+    /// Scans for a pattern in a page.
+    /// # Arguments
+    /// * `pattern` - The pattern to scan for.
+    /// * `page` - The page to scan.
+    /// # Returns
+    /// * [Option<usize>] - The address which has been found.
     fn scan_batch(&self, pattern: &str, page: &Vec<u8>) -> Option<usize> {
         for i in 0..page.len() {
             let mut okay = true;
