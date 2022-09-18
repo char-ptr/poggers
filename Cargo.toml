@@ -4,6 +4,9 @@ version = "0.1.1-dev"
 edition = "2021"
 description = "memory lib"
 license = "GPL-2.0"
+authors = ["luna <luna@aixeria.com>","VilotStar <macbookairuser12@priest.com>"]
+repository = "https://github.com/pozm/poggers"
+
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [workspace]
@@ -19,7 +22,7 @@ windows = {version = "0.39.0",features = [
 anyhow = "1.0.65"
 thiserror = "1.0.35"
 log = "0.4.17"
-poggers-derive = {path="./poggers-derive"}
+poggers-derive = {path="./poggers-derive", version="0.1.1-dev"}
 [features]
 default = ["win"]
 win = ["windows"]
