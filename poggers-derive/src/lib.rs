@@ -3,12 +3,39 @@ use proc_macro2::Span;
 use proc_macro_crate::crate_name;
 // use proc_macro2::TokenStream;
 use quote::{quote, ToTokens};
-use syn::{parse_macro_input, ItemFn, Ident};
+use syn::{parse_macro_input, ItemFn, Ident, parse::Parse, punctuated::Punctuated, Token};
 
+
+struct CreateEntryArguments {
+    no_console: bool
+}
+
+impl Parse for CreateEntryArguments {
+    fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
+        let argss = Punctuated::<Ident, Token![,]>::parse_terminated(input)?;
+        for arg in argss {
+            if arg == "no_console" {
+                return Ok(CreateEntryArguments {
+                    no_console: true
+                });
+            }
+        }
+        return Ok(CreateEntryArguments {
+            no_console: false
+        });
+    }
+}
+
+
+/// This macro allows you to define a function which will be called upon dll injection
+/// ## Notes
+/// On windows, this will automatically allocate a console, if you don't wan't do do that, use the `no_console` attribute
 #[proc_macro_attribute]
 pub fn create_entry(attr:TokenStream, item:TokenStream) -> TokenStream {
     let input = parse_macro_input!(item as ItemFn);
+    let arg = parse_macro_input!(attr as CreateEntryArguments);
     let input_name = input.sig.ident.clone();
+
 
     let curr_crate = match crate_name("poggers").expect("poggers-derive to be found") {
         proc_macro_crate::FoundCrate::Itself => quote!(crate),
@@ -38,16 +65,16 @@ pub fn create_entry(attr:TokenStream, item:TokenStream) -> TokenStream {
         },
     };
 
-    let alloc_console = quote!{
+    let alloc_console = if arg.no_console {quote!{}} else {quote!{
         unsafe {
             #curr_crate::exports::AllocConsole();
         };
-    };
-    let free_console = quote!{
+    }};
+    let free_console = if arg.no_console {quote!{}} else {quote!{
         unsafe {
             #curr_crate::exports::FreeConsole();
         };
-    };
+    }};
 
     let cross_platform = quote!{
         use ::std::panic;
