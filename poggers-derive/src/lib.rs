@@ -95,7 +95,7 @@ pub fn create_entry(attr:TokenStream, item:TokenStream) -> TokenStream {
             _: *const ::std::ffi::c_void
         ) -> #curr_crate::exports::BOOL {
             match reason {
-                crate::exports::DLL_PROCESS_ATTACH => {
+                #curr_crate::exports::DLL_PROCESS_ATTACH => {
                     std::thread::spawn(|| {
                         #alloc_console
                         #cross_platform
