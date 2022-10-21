@@ -16,37 +16,38 @@ use windows::Win32::{
 
 use crate::mem::sigscan::SigScan;
 
-use super::process::Process;
+use super::process::ExProcess;
 use anyhow::{Context, Result};
 use thiserror::Error;
 
 
 /// A module in a process.
 #[derive(Debug)]
-pub struct Module<'a> {
-    pub(crate) process: &'a Process,
+pub struct ExModule<'a> {
+    pub(crate) process: &'a ExProcess,
     pub(crate) base_address: usize,
     pub(crate) size: usize,
     pub(crate) name: String,
     pub(crate) handle: HINSTANCE,
 }
 
-impl<'a> Module<'a> {
+impl<'a> ExModule<'a> {
     /// create a new module object from a process and a module name.
     /// # Arguments
     /// * `name` - The name of the module to find.
     /// * `process` - The process to find the module in.
     /// # Example
     /// ```
-    /// use poggers::mem::process::Process;
-    /// use poggers::mem::module::Module;
-    /// let process = Process::new("notepad.exe").unwrap();
-    /// let module = Module::new("user32.dll", &process).unwrap();
+    /// use poggers::mem::process::ExProcess;
+    /// use poggers::mem::module::ExModule;
+    /// let process = ExProcess::new("notepad.exe").unwrap();
+    /// let module = ExModule::new("user32.dll", &process).unwrap();
     /// ```
     /// # Errors
     /// * [`ModuleError::NoModuleFound`] - The module was not found in the process.
     /// * [`ModuleError::UnableToOpenHandle`] - The module handle could not be retrieved.
-    pub fn new(name: &str, proc: &'a Process) -> Result<Self> {
+    #[cfg(target_os = "windows")]
+    pub fn new(name: &str, proc: &'a ExProcess) -> Result<Self> {
         let mut me: MODULEENTRY32 = Default::default();
         me.dwSize = std::mem::size_of::<MODULEENTRY32>() as u32;
 
@@ -101,13 +102,13 @@ impl<'a> Module<'a> {
     /// * `pattern` - The pattern to scan for (IDA Style).
     /// # Example
     /// ```
-    /// use poggers::mem::process::Process;
-    /// use poggers::mem::module::Module;
-    /// let process = Process::new("notepad.exe").unwrap();
-    /// let module = Module::new("user32.dll", &process).unwrap();
+    /// use poggers::mem::process::ExProcess;
+    /// use poggers::mem::module::ExModule;
+    /// let process = ExProcess::new("notepad.exe").unwrap();
+    /// let module = ExModule::new("user32.dll", &process).unwrap();
     /// let address = module.pattern_scan("48 8B 05 ? ? ? ? 48 8B 88 ? ? ? ? 48 85 C9 74 0A").unwrap();
     /// ```
-    /// 
+    ///
     pub fn scan_virtual(&self, pattern: &str) -> Option<usize> {
         let mut mem_info: MEMORY_BASIC_INFORMATION = Default::default();
         mem_info.RegionSize = 0x4096;
@@ -116,7 +117,7 @@ impl<'a> Module<'a> {
 
         let mut addr = self.base_address;
 
-        loop { 
+        loop {
             if addr >= self.base_address + self.size {
                 break;
             }
@@ -169,109 +170,14 @@ pub enum ModuleError {
     NoModuleFound(String),
 }
 
-impl<'a> SigScan for Module<'a> {
+impl<'a> SigScan for ExModule<'a> {
     fn read<T: Default>(&self, addr: usize) -> Result<T> {
         self.process.read::<T>(addr)
     }
 }
 
-// impl<'a> Drop for Module<'a> { // we don't own the handle
+// impl<'a> Drop for ExModule<'a> { // we don't own the handle
 //     fn drop(&mut self) {
 //         unsafe { CloseHandle(std::transmuteself.handle); }
 //     }
 // }
-
-mod tests {
-    use std::{
-        io::{BufRead, BufReader},
-        process::{Command, Stdio},
-    };
-
-    use super::*;
-    #[test]
-    fn read() {
-        let proc = Command::new("./test-utils/rw-test.exe")
-            .stdout(Stdio::piped())
-            .spawn()
-            .expect("bruh");
-        let proc_id = proc.id();
-        let l = BufReader::new(proc.stdout.unwrap());
-        let mut lines = l.lines();
-        let current_val = lines.next().unwrap().unwrap();
-
-        println!("Current value: {} -> pid = {proc_id}", current_val);
-        let xproc = Process::new_from_pid(proc_id).unwrap();
-
-        let base_mod = xproc.get_base_module().unwrap();
-
-        println!(
-            "predicted = {:X} | b = {:X}",
-            base_mod.base_address + 0x43000,
-            base_mod.base_address
-        );
-
-        let offset = base_mod.base_address + 0x43000;
-
-        let read_val = xproc.read::<u32>(offset).unwrap();
-
-        assert_eq!(current_val.parse::<u32>().unwrap(), read_val);
-    }
-    #[test]
-    fn write() {
-        let proc = Command::new("./test-utils/rw-test.exe")
-            .stdout(Stdio::piped())
-            .spawn()
-            .expect("bruh");
-        let proc_id = proc.id();
-        let l = BufReader::new(proc.stdout.unwrap());
-        let mut lines = l.lines();
-        let current_val = lines.next().unwrap().unwrap();
-
-        println!("Current value: {} -> pid = {proc_id}", current_val);
-        let xproc = Process::new_from_pid(proc_id).unwrap();
-
-        let base_mod = xproc.get_base_module().unwrap();
-
-        println!(
-            "predicted = {:X} | b = {:X}",
-            base_mod.base_address + 0x43000,
-            base_mod.base_address
-        );
-
-        let offset = base_mod.base_address + 0x43000;
-
-        let read_val = xproc.read::<u32>(offset).unwrap();
-
-        assert_eq!(current_val.parse::<u32>().unwrap(), read_val);
-
-        xproc.write(offset, &9832472u32).unwrap();
-
-        let current_val = lines.next().unwrap().unwrap();
-
-        assert_eq!(current_val.parse::<u32>().unwrap(), 9832472u32);
-    }
-    #[test]
-    fn sig() {
-        let proc = Command::new("./test-utils/rw-test.exe")
-            .stdout(Stdio::piped())
-            .spawn()
-            .expect("bruh");
-        let proc_id = proc.id();
-        let l = BufReader::new(proc.stdout.unwrap());
-        let mut lines = l.lines();
-        let current_val = lines.next().unwrap().unwrap();
-
-        println!("Current value: {} -> pid = {proc_id}", current_val);
-        let xproc = Process::new_from_pid(proc_id).unwrap();
-
-        let base_mod = xproc.get_base_module().unwrap();
-
-        println!(
-            "predicted = {:X} | b = {:X}",
-            base_mod.base_address + 0x43000,
-            base_mod.base_address
-        );
-
-        let offset = base_mod.scan_virtual("F3 48 0F 2A C0").unwrap();
-    }
-}

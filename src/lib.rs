@@ -33,7 +33,10 @@
  */
 
 pub mod mem;
+
+// re exports
 pub mod exports;
+pub use poggers_derive::create_entry;
 
 
 

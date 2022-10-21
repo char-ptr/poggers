@@ -22,43 +22,43 @@ use windows::Win32::{
     },
 };
 
-use super::module::Module;
+use super::module::ExModule;
 
 /// A Class describing a windows process
 #[derive(Debug)]
-pub struct Process {
+pub struct ExProcess {
     pub(crate) handl: windows::Win32::Foundation::HANDLE,
     pub(crate) pid: u32,
     pub(crate) name: String,
 }
-impl<'a> Process {
-    /// Creates a new [`Process`] from a pid
+impl<'a> ExProcess {
+    /// Creates a new [`ExProcess`] from a pid
     /// # Example
     /// ```
-    /// use mem::process::Process;
-    /// let proc = Process::new(1234).unwrap();
+    /// use mem::process::ExProcess;
+    /// let proc = ExProcess::new(1234).unwrap();
     /// ```
-    pub fn new_from_pid(pid: u32) -> Result<Process> {
+    pub fn new_from_pid(pid: u32) -> Result<ExProcess> {
         let process_name = Self::get_name_from_pid(pid)?;
         let handle = Self::open_handle(pid)?;
 
-        Ok(Process {
+        Ok(ExProcess {
             handl: handle,
             pid,
             name: process_name,
         })
     }
-    /// create a new [`Process`] from a process name
+    /// create a new [`ExProcess`] from a process name
     /// # Example
     /// ```
-    /// use mem::process::Process;
-    /// let process = Process::new("csgo.exe").unwrap();
+    /// use mem::process::ExProcess;
+    /// let process = ExProcess::new("csgo.exe").unwrap();
     /// ```
-    pub fn new_from_name(name: String) -> Result<Process> {
+    pub fn new_from_name(name: String) -> Result<ExProcess> {
         let pid = Self::get_pid_from_name(&name)?;
         let handle = Self::open_handle(pid)?;
 
-        Ok(Process {
+        Ok(ExProcess {
             handl: handle,
             pid,
             name,
@@ -152,7 +152,7 @@ impl<'a> Process {
     /// * offsets - a vector of offsets
     /// # example
     /// ```
-    /// let mut process = Process::new_from_name("notepad.exe".to_string()).unwrap();
+    /// let mut process = ExProcess::new_from_name("notepad.exe".to_string()).unwrap();
     /// let addr = process.solve_dma(0x12345678, vec![0x0, 0x4, 0x8]).unwrap();
     /// ```
     pub fn solve_dma(&self, addr: usize, offsets: &Vec<usize>) -> Result<usize> {
@@ -170,8 +170,8 @@ impl<'a> Process {
     /// you provide a generic and the size of the generic will be calculated using [`std::mem::size_of`], if you want to specify the size use [`Self::read_sized`]
     /// # Example
     /// ```
-    /// use poggers::process::Process;
-    /// let process = Process::new_from_name("notepad.exe".to_string()).unwrap();
+    /// use poggers::process::ExProcess;
+    /// let process = ExProcess::new_from_name("notepad.exe".to_string()).unwrap();
     /// let value = process.read::<u32>(0x12345678).unwrap();
     /// ```
     /// 
@@ -206,8 +206,8 @@ impl<'a> Process {
     /// * `size` - The size of the buffer to read
     /// # Example
     /// ```
-    /// use poggers::process::Process;
-    /// let process = Process::new_from_name("notepad.exe".to_string()).unwrap();
+    /// use poggers::process::ExProcess;
+    /// let process = ExProcess::new_from_name("notepad.exe".to_string()).unwrap();
     /// let value = process.read_sized(0x12345678, 0x100).unwrap();
     /// ```
     /// 
@@ -239,8 +239,8 @@ impl<'a> Process {
     /// * `data` - The value to write.
     /// # Example
     /// ```
-    /// use poggers::process::Process;
-    /// let mut process = Process::new_from_name("notepad.exe".to_string()).unwrap();
+    /// use poggers::process::ExProcess;
+    /// let mut process = ExProcess::new_from_name("notepad.exe".to_string()).unwrap();
     /// process.write::<u32>(0x12345678, 0x1337).unwrap();
     /// ```
     /// 
@@ -272,8 +272,8 @@ impl<'a> Process {
     /// * `prot` - The new protection to set.
     /// # Example
     /// ```
-    /// use poggers::process::Process;
-    /// let mut process = Process::new_from_name("notepad.exe".to_string()).unwrap();
+    /// use poggers::process::ExProcess;
+    /// let mut process = ExProcess::new_from_name("notepad.exe".to_string()).unwrap();
     /// let old_prot = process.change_protection(0x12345678, 0x100, windows::Windows::Win32::System::Memory::PAGE_EXECUTE_READWRITE).unwrap();
     /// ```
     pub fn change_protection(
@@ -305,15 +305,15 @@ impl<'a> Process {
     }
     /// Get the base module of the process (name.exe module)
     /// # Return
-    /// * [Result]<[Module]> - The base module of the process
+    /// * [Result]<[ExModule]> - The base module of the process
     /// # Example
     /// ```
-    /// use poggers::process::Process;
-    /// let mut process = Process::new_from_name("notepad.exe".to_string()).unwrap();
+    /// use poggers::process::ExProcess;
+    /// let mut process = ExProcess::new_from_name("notepad.exe".to_string()).unwrap();
     /// let base_module = process.get_base_module().unwrap();
     /// ```
-    pub fn get_base_module(&'a self) -> Result<Module<'a>> {
-        Module::new(&self.name, self)
+    pub fn get_base_module(&'a self) -> Result<ExModule<'a>> {
+        ExModule::new(&self.name, self)
     }
 }
 #[derive(Debug)]
@@ -352,7 +352,7 @@ pub enum ProcessError {
     UnableToChangeProtection(usize),
 }
 
-impl Drop for Process {
+impl Drop for ExProcess {
     fn drop(&mut self) {
         unsafe {
             CloseHandle(self.handl);
