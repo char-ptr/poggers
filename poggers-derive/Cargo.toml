@@ -1,6 +1,6 @@
 [package]
 name = "poggers-derive"
-version = "0.1.1-dev2"
+version = "0.1.1-dev3"
 edition = "2021"
 description = "traits for poggers"
 license = "GPL-2.0"

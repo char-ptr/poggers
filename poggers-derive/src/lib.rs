@@ -90,7 +90,7 @@ pub fn create_entry(attr:TokenStream, item:TokenStream) -> TokenStream {
     let generated = quote!{
         #[no_mangle]
         extern "system" fn DllMain(
-            h_module : crate::exports::HINSTANCE,
+            h_module : #curr_crate::exports::HINSTANCE,
             reason : u32,
             _: *const ::std::ffi::c_void
         ) -> #curr_crate::exports::BOOL {
