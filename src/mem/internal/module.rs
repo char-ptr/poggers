@@ -48,7 +48,7 @@ impl InModule {
 
         let lpc_str = windows::core::PCSTR::from_raw(format!("{}\n", name).as_ptr() as *const u8);
 
-        let module = unsafe {GetModuleHandleA(lpc_str)}.or(Err(ModuleError::NoModuleFound(name.to_string())))?;
+        let module = unsafe {GetModuleHandleA(lpc_str)}.or(Err(InModuleError::NoModuleFound(name.to_string())))?;
 
         let mut mod_info : MODULEINFO = Default::default();
 
@@ -57,7 +57,7 @@ impl InModule {
         let info = unsafe { K32GetModuleInformation(proc, module, &mut mod_info, std::mem::size_of::<MODULEINFO>() as u32) } ;
 
         if info == false {
-            return Err(ModuleError::UnableToFetchInformation(name.to_string()).into());
+            return Err(InModuleError::UnableToFetchInformation(name.to_string()).into());
         }
 
         Ok(Self {
