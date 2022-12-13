@@ -34,9 +34,6 @@ pub trait SigScan {
                     Ok(e) => e,
                 };
                 let byte2 = u8::from_str_radix(&pattern[ci..ci + 2].to_string(), 16).unwrap();
-                if offset > 1 {
-                    println!("{:X} -> {:X}", byte, byte2);
-                }
                 if byte != byte2 {
                     okay = false;
                     break;
@@ -44,7 +41,6 @@ pub trait SigScan {
                 offset += 1;
             }
             if okay {
-                println!("pogging");
                 return Some(from + i);
             }
         }
@@ -60,7 +56,8 @@ pub trait SigScan {
         for i in 0..page.len() {
             let mut okay = true;
             let mut offset = 0;
-            for ci in (0..pattern.len()) {
+
+            for ci in 0..pattern.len() {
                 let c = &pattern[ci..ci + 1];
                 if c == "?" {
                     offset += 1;
@@ -79,7 +76,6 @@ pub trait SigScan {
                 offset += 1;
             }
             if okay {
-                println!("pogging");
                 return Some(i);
             }
         }

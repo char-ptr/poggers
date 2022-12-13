@@ -113,8 +113,6 @@ impl<'a> ExModule<'a> {
         let mut mem_info: MEMORY_BASIC_INFORMATION = Default::default();
         mem_info.RegionSize = 0x4096;
 
-        println!("{} -> {}", self.base_address, self.size);
-
         let mut addr = self.base_address;
 
         loop {
@@ -136,10 +134,8 @@ impl<'a> ExModule<'a> {
             }
 
             let page = self
-                .process
                 .read_sized(addr, mem_info.RegionSize - 1)
                 .ok()?;
-
             let scan_res = self.scan_batch(pattern, &page);
 
             if let Some(result) = scan_res {
@@ -177,6 +173,7 @@ impl<'a> SigScan for ExModule<'a> {
 }
 
 impl<'a> Mem for ExModule<'a> {
+    const READ_REQUIRE_PROTECTION: bool = true;
     unsafe fn alter_protection(&self,addr:usize, size: usize, prot: crate::mem::structures::Protections) -> Result<crate::mem::structures::Protections> {
         self.process.alter_protection(addr, size, prot)
     }

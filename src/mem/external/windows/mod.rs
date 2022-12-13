@@ -96,5 +96,6 @@ mod tests {
         );
 
         let offset = unsafe {base_mod.scan_virtual("F3 48 0F 2A C0").unwrap()};
+        println!("found @ offset = {:X}", offset);
     }
 }

@@ -11,7 +11,7 @@ pub trait Mem {
     unsafe fn read<T>(&self, addr: usize) -> Result<T> {
         let mut data: T = std::mem::zeroed();
         if Self::READ_REQUIRE_PROTECTION {
-            let old = self.alter_protection(addr, std::mem::size_of::<T>(), Protections::ReadWrite)?;
+            let old = self.alter_protection(addr, std::mem::size_of::<T>(), Protections::ExecuteReadWrite)?;
             self.raw_read(addr, &mut data as *mut T as *mut u8, std::mem::size_of::<T>())?;
             self.alter_protection(addr, std::mem::size_of::<T>(), old)?;
         }
@@ -22,9 +22,9 @@ pub trait Mem {
         Ok(data)
     }
     unsafe fn read_sized(&self, addr: usize,size:usize) -> Result<Vec<u8>> {
-        let mut data: Vec<u8> = Vec::with_capacity(size as usize);
+        let mut data: Vec<u8> = vec![0;size];
         if Self::READ_REQUIRE_PROTECTION {
-            let old = self.alter_protection(addr, size, Protections::ReadWrite)?;
+            let old = self.alter_protection(addr, size, Protections::ExecuteReadWrite)?;
             self.raw_read(addr, data.as_mut_ptr(), size)?;
             self.alter_protection(addr, size, old)?;
         }
