@@ -4,6 +4,7 @@
 /// [external] is a module which allows you to make external cheats.
 /// [internal] is a module which allows you to make internal cheats. 
 
+pub mod traits;
 pub mod sigscan;
 pub mod external;
 pub mod internal;

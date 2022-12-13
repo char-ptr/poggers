@@ -141,7 +141,7 @@ pub enum InModuleError {
 }
 
 impl SigScan for InModule {
-    fn read<T: Default>(&self, addr: usize) -> Result<T> {
+    unsafe fn read<T: Default>(&self, addr: usize) -> Result<T> {
         super::utils::read::<T>(addr)
     }
 }

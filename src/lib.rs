@@ -1,3 +1,4 @@
+#![feature(generic_const_exprs)]
 /*!
  * #Poggers
  * A Work in Progress Memory (game cheating) Library for Rust

@@ -4,7 +4,7 @@ use anyhow::Result;
 /// * [`Self::scan`] will read for each byte in the size
 /// * [`Self::scan_batch`] will take a vector of a page and will not make additional read calls (better for external.)
 pub trait SigScan {
-    fn read<T: Default>(&self, addr: usize) -> Result<T>;
+    unsafe fn read<T: Default>(&self, addr: usize) -> Result<T>;
     /// Scans for a pattern in the process.
     /// # Arguments
     /// * `pattern` - The pattern to scan for.
@@ -12,7 +12,7 @@ pub trait SigScan {
     /// * `size` - The size of the region to scan.
     /// # Returns
     /// * [Option<usize>] - The address which has been found.
-    fn scan(&self, pattern: &str, from: usize, size: usize) -> Option<usize> {
+    unsafe fn scan(&self, pattern: &str, from: usize, size: usize) -> Option<usize> {
         for i in 0..size {
             let mut okay = true;
             let mut offset = 0;

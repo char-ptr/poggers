@@ -1,51 +1,61 @@
-use windows::Win32::Foundation::HINSTANCE;
-use anyhow::Result;
 
-#[derive(Debug)]
-pub struct Process {
-    pub(crate) handl: windows::Win32::Foundation::HANDLE,
-    pub(crate) pid: u32,
-    pub(crate) name: String,
+pub enum Protections {
+    Execute,
+    ExecuteRead,
+    ExecuteReadWrite,
+    ExecuteWriteCopy,
+    NoAccess,
+    ReadOnly,
+    ReadWrite,
+    WriteCopy,
+    TargetInvalid,
+    TargerNoUpdate,
+    INVALID
 }
+#[cfg(windows)]
+use windows::Win32::System::Memory::PAGE_PROTECTION_FLAGS;
+impl Protections {
+    #[cfg(windows)]
+    pub fn u32(&self) -> u32 {
+        match &self {
+            Protections::Execute => 0x10,
+            Protections::ExecuteRead => 0x20,
+            Protections::ExecuteReadWrite => 0x40,
+            Protections::ExecuteWriteCopy => 0x80,
+            Protections::NoAccess => 0x01,
+            Protections::ReadOnly => 0x02,
+            Protections::ReadWrite => 0x04,
+            Protections::WriteCopy => 0x08,
+            Protections::TargetInvalid => 0x40000000,
+            Protections::TargerNoUpdate => 0x40000000,
+            Protections::INVALID => 0x0,
+        }
+    }
+    #[cfg(windows)]
+    pub fn native(&self) -> PAGE_PROTECTION_FLAGS {
 
-#[derive(Debug)]
-pub struct Module<'a> {
-    pub(crate) process: &'a Process,
-    pub(crate) base_address: usize,
-    pub(crate) size: usize,
-    pub(crate) name: String,
-    pub(crate) handle: HINSTANCE,
+        PAGE_PROTECTION_FLAGS(self.u32())
+    }
 }
-
-// trait Process {
-//     fn from_name(name: &str) -> Result<Self> where Self: Sized;
-//     fn get_base_module(&self) -> Result<Box<dyn Module>>;
-//     fn get_module(&self, name: &str) -> Result<Box<dyn Module>>;
-//     fn get_name(&self) -> &str;
-//     fn get_pid(&self) -> u32;
-//     fn get_handle(&self) -> windows::Win32::Foundation::HANDLE;
-// }
-
-// trait MemEdit {
-//     fn read<T>(&self, addr:usize) -> Result<T>;
-//     fn read_sized(&self, addr:usize, size:usize) -> Vec<u8>;
-
-//     fn write<T>(&self, addr:usize, val:T) -> Result<()>;
-//     fn write_sized(&self, addr:usize, val:Vec<u8>) -> Result<()>;
-//     fn scan(&self, sig:&str) -> Result<usize>;
-//     fn scan_page(&self, sig:&str, page:Vec<u8>) -> Result<usize>;
-//     fn copy<T>(&self, src:usize, dst: *mut T) -> Result<()>;
-//     fn copy_sized(&self, src:usize, dst:usize, size:usize) -> Result<()>;
-//     fn change_protection<T>(&self, addr:usize, prot:u32) -> Result<()>;
-//     fn change_protection_sized(&self, addr:usize,size : usize, prot:u32) -> Result<()>;
-
-// }
-
-// trait Module<'a> {
-//     fn new(name: &str, proc: Option<&'a Box<dyn Process>>) -> Result<Self> where Self: Sized;
-//     fn get_base_address(&self) -> Result<usize>;
-//     fn get_size(&self) -> Result<usize>;
-//     fn get_name(&self) -> Result<String>;
-//     fn get_handle(&self) -> Result<HINSTANCE>;
-
-// }
+#[cfg(windows)]
+impl From<u32> for Protections {
+    fn from(value: u32) -> Self {
+        match value {
+            0x10 => Protections::Execute,
+            0x20 => Protections::ExecuteRead,
+            0x40 => Protections::ExecuteReadWrite,
+            0x80 => Protections::ExecuteWriteCopy,
+            0x01 => Protections::NoAccess,
+            0x02 => Protections::ReadOnly,
+            0x04 => Protections::ReadWrite,
+            0x08 => Protections::WriteCopy,
+            0x40000000 => Protections::TargetInvalid,
+            _ => Protections::INVALID,
+        }
+    }
+}
+impl Into<u32> for Protections {
+    fn into(self) -> u32 {
+        self.u32()
+    }
+}

@@ -19,7 +19,7 @@ use crate::mem::sigscan::SigScan;
 use super::process::ExProcess;
 use anyhow::{Context, Result};
 use thiserror::Error;
-
+use crate::mem::traits::Mem;
 
 /// A module in a process.
 #[derive(Debug)]
@@ -109,7 +109,7 @@ impl<'a> ExModule<'a> {
     /// let address = module.pattern_scan("48 8B 05 ? ? ? ? 48 8B 88 ? ? ? ? 48 85 C9 74 0A").unwrap();
     /// ```
     ///
-    pub fn scan_virtual(&self, pattern: &str) -> Option<usize> {
+    pub unsafe fn scan_virtual(&self, pattern: &str) -> Option<usize> {
         let mut mem_info: MEMORY_BASIC_INFORMATION = Default::default();
         mem_info.RegionSize = 0x4096;
 
@@ -155,7 +155,7 @@ impl<'a> ExModule<'a> {
         addr - self.base_address
     }
 
-    pub fn resolve_relative_ptr(&self, addr: usize, offset: u32) -> Result<usize> {
+    pub unsafe fn resolve_relative_ptr(&self, addr: usize, offset: u32) -> Result<usize> {
         let real_offset = self.process.read::<u32>(addr + offset as usize)?;
         println!("Real offset: {:X?}", real_offset);
         Ok(self.base_address + (self.get_relative(addr) + real_offset as usize))
@@ -171,8 +171,20 @@ pub enum ModuleError {
 }
 
 impl<'a> SigScan for ExModule<'a> {
-    fn read<T: Default>(&self, addr: usize) -> Result<T> {
+    unsafe fn read<T: Default>(&self, addr: usize) -> Result<T> {
         self.process.read::<T>(addr)
+    }
+}
+
+impl<'a> Mem for ExModule<'a> {
+    unsafe fn alter_protection(&self,addr:usize, size: usize, prot: crate::mem::structures::Protections) -> Result<crate::mem::structures::Protections> {
+        self.process.alter_protection(addr, size, prot)
+    }
+    unsafe fn raw_read(&self, addr: usize,data: *mut u8, size: usize) -> Result<()> {
+        self.process.raw_read(addr, data, size)
+    }
+    unsafe fn raw_write(&self, addr: usize,data: *const u8, size: usize) -> Result<()> {
+        self.process.raw_write(addr, data, size)
     }
 }
 
