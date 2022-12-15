@@ -1,10 +1,11 @@
-use anyhow::Result;
-
+use super::traits::Mem;
 /// The trait which allows a class to sig scan.
+/// # Notes
+/// Requires the [`Mem`] trait to be implemented.
+/// # Functions
 /// * [`Self::scan`] will read for each byte in the size
 /// * [`Self::scan_batch`] will take a vector of a page and will not make additional read calls (better for external.)
-pub trait SigScan {
-    unsafe fn read<T: Default>(&self, addr: usize) -> Result<T>;
+pub trait SigScan: Mem {
     /// Scans for a pattern in the process.
     /// # Arguments
     /// * `pattern` - The pattern to scan for.
@@ -26,7 +27,7 @@ pub trait SigScan {
                 } else if ci % 3 != 0 {
                     continue;
                 }
-                let byte = match <Self as SigScan>::read::<u8>(self, from + i + offset) {
+                let byte = match Self::read::<u8>(self, from + i + offset) {
                     Err(e) => {
                         okay = false;
                         break;

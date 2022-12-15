@@ -166,11 +166,7 @@ pub enum ModuleError {
     NoModuleFound(String),
 }
 
-impl<'a> SigScan for ExModule<'a> {
-    unsafe fn read<T: Default>(&self, addr: usize) -> Result<T> {
-        self.process.read::<T>(addr)
-    }
-}
+impl<'a> SigScan for ExModule<'a> {}
 
 impl<'a> Mem for ExModule<'a> {
     const READ_REQUIRE_PROTECTION: bool = true;

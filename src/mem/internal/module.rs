@@ -14,7 +14,7 @@ use windows::Win32::{
     },
 };
 
-use crate::mem::sigscan::SigScan;
+use crate::mem::{sigscan::SigScan, traits::Mem};
 
 use anyhow::{Context, Result};
 use thiserror::Error;
@@ -140,8 +140,17 @@ pub enum InModuleError {
     UnableToFetchInformation(String),
 }
 
-impl SigScan for InModule {
-    unsafe fn read<T: Default>(&self, addr: usize) -> Result<T> {
-        super::utils::read::<T>(addr)
+impl Mem for InModule {
+    unsafe fn raw_read(&self, addr: usize,data: *mut u8, size: usize) -> Result<()> {
+        (addr as *mut u8).copy_to_nonoverlapping(data, size);
+        Ok(())
+    }
+    unsafe fn raw_write(&self, addr: usize,data: *const u8, size: usize) -> Result<()> {
+        (addr as *mut u8).copy_from_nonoverlapping(data, size);
+        Ok(())
+    }
+    unsafe fn alter_protection(&self,addr:usize, size: usize, prot: crate::mem::structures::Protections) -> Result<crate::mem::structures::Protections> {
+        Ok(prot)
     }
 }
+impl SigScan for InModule {}
