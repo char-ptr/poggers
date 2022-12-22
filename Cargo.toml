@@ -20,15 +20,14 @@ windows = {version = "0.43.0",features = [
     "Win32_System_SystemServices"
 ], optional = true}
 libc = {version = "0.2.139", optional = true}
+mach = {version = "0.3.2", optional = true}
 anyhow = "1.0.65"
 thiserror = "1.0.35"
 log = "0.4.17"
-poggers-derive = {path="./poggers-derive", version="0.1.1-dev1"}
-
-[target.'cfg(not(target_os = "windows"))'.dependencies]
-ctor = "0.1.23"
+poggers-derive = {path="./poggers-derive", version="0.1.1-dev4"}
 
 [features]
 default = ["win"]
-linux = ["libc"]
+linux = ["libc","poggers-derive/linux"]
+macos = ["mach","poggers-derive/macos"]
 win = ["windows"]

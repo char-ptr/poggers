@@ -229,7 +229,7 @@ impl Mem for ExProcess {
             addr as *const c_void,
             data as *mut _,
             size,
-            &mut 0,
+            Some(&mut 0),
         );
 
 
@@ -245,7 +245,7 @@ impl Mem for ExProcess {
             addr as *const c_void,
             data as *const _,
             size,
-            &mut 0,
+            Some(&mut 0),
         );
         if res.as_bool() {
             Ok(())

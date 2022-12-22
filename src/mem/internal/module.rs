@@ -95,7 +95,7 @@ impl InModule {
 
             let worky = unsafe {
                 VirtualQuery(
-                    addr as *const c_void,
+                    Some(addr as *const c_void),
                     &mut mem_info,
                     std::mem::size_of::<MEMORY_BASIC_INFORMATION>(),
                 )
