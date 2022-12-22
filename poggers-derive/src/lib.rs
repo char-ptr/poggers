@@ -32,7 +32,7 @@ impl Parse for CreateEntryArguments {
 /// On windows, this will automatically allocate a console, if you don't wan't do do that, use the `no_console` attribute
 #[proc_macro_attribute]
 pub fn create_entry(attr:TokenStream, item:TokenStream) -> TokenStream {
-    let input = parse_macro_input!(item as ItemFn);
+      let input = parse_macro_input!(item as ItemFn);
     let arg = parse_macro_input!(attr as CreateEntryArguments);
     let input_name = input.sig.ident.clone();
 
