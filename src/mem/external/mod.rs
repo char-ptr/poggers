@@ -1,8 +1,14 @@
 /// Impementation for linux based systems
 #[cfg(target_os = "linux")]
-pub mod linux;
+mod linux;
 
 
 #[cfg(windows)]
 /// Implementation for windows based systems
-pub mod windows;
+mod windows;
+
+
+#[cfg(target_os = "linux")]
+pub use linux::*;
+#[cfg(target_os = "windows")]
+pub use windows::*;

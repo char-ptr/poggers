@@ -14,8 +14,8 @@ pub enum Protections {
 }
 #[cfg(windows)]
 use windows::Win32::System::Memory::PAGE_PROTECTION_FLAGS;
+#[cfg(windows)]
 impl Protections {
-    #[cfg(windows)]
     pub fn u32(&self) -> u32 {
         match &self {
             Protections::Execute => 0x10,
@@ -31,7 +31,6 @@ impl Protections {
             Protections::INVALID => 0x0,
         }
     }
-    #[cfg(windows)]
     pub fn native(&self) -> PAGE_PROTECTION_FLAGS {
 
         PAGE_PROTECTION_FLAGS(self.u32())
@@ -54,6 +53,7 @@ impl From<u32> for Protections {
         }
     }
 }
+#[cfg(windows)]
 impl Into<u32> for Protections {
     fn into(self) -> u32 {
         self.u32()
