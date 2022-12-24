@@ -1,6 +1,6 @@
 [package]
 name = "poggers"
-version = "0.1.1-dev2"
+version = "0.1.1-dev3"
 edition = "2021"
 description = "memory lib"
 license = "GPL-2.0"
@@ -21,10 +21,10 @@ windows = {version = "0.43.0",features = [
 ], optional = true}
 libc = {version = "0.2.139", optional = true}
 mach = {version = "0.3.2", optional = true}
-anyhow = "1.0.65"
-thiserror = "1.0.35"
+anyhow = "1.0.68"
+thiserror = "1.0.38"
 log = "0.4.17"
-poggers-derive = {path="./poggers-derive", version="0.1.1-dev4"}
+poggers-derive = {path="./poggers-derive", version="0.1.1-dev5"}
 
 [features]
 default = ["win"]
