@@ -105,7 +105,7 @@ impl InModule {
                 continue;
             }
 
-            let page = super::utils::read_sized(addr, mem_info.RegionSize - 1)
+            let page = super::super::utils::read_sized(addr, mem_info.RegionSize - 1)
                 .ok()?;
 
             let scan_res = self.scan_batch(pattern, &page);
@@ -124,7 +124,7 @@ impl InModule {
     }
 
     pub fn resolve_relative_ptr(&self, addr: usize, offset: u32) -> Result<usize> {
-        let real_offset = super::utils::read::<u32>(addr + offset as usize)?;
+        let real_offset = super::super::utils::read::<u32>(addr + offset as usize)?;
         println!("Real offset: {:X?}", real_offset);
         Ok(self.base_address + (self.get_relative(addr) + real_offset as usize))
     }
