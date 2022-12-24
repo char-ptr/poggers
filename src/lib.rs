@@ -1,3 +1,4 @@
+#![warn(missing_docs)]
 #![feature(generic_const_exprs)]
 /*!
  * #Poggers
@@ -40,7 +41,7 @@ pub mod exports;
 pub use poggers_derive::create_entry;
 
 
-
+#[doc(hidden)]
 pub mod tests {
     #[poggers_derive::create_entry]
     fn deriv_test() -> Result<(),()> {
