@@ -17,7 +17,7 @@ use windows::Win32::{
 use crate::mem::sigscan::SigScan;
 
 use super::process::ExProcess;
-use anyhow::{Context, Result};
+use anyhow::{Context, Result, anyhow};
 use thiserror::Error;
 use crate::mem::traits::Mem;
 
@@ -147,14 +147,18 @@ impl<'a> ExModule<'a> {
         None
     }
 
-    pub fn get_relative(&self, addr: usize) -> usize {
-        addr - self.base_address
+    pub fn get_relative(&self, addr: usize,offset:usize) -> usize {
+        (addr - self.base_address) + offset
     }
 
-    pub unsafe fn resolve_relative_ptr(&self, addr: usize, offset: u32) -> Result<usize> {
-        let real_offset = self.process.read::<u32>(addr + offset as usize)?;
+    pub unsafe fn resolve_relative_ptr(&self, addr: usize, offset: usize) -> Result<usize> {
+        let real_offset = self.read::<u32>(addr)?;
         println!("Real offset: {:X?}", real_offset);
-        Ok(self.base_address + (self.get_relative(addr) + real_offset as usize))
+        let rel = self.get_relative(addr,offset);
+        let real = rel + real_offset as usize;
+        println!("Real: {:X?}", real);
+        Ok(self.base_address + real)
+        // Err(anyhow!("lazy"))
     }
 }
 

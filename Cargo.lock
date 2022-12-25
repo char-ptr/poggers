@@ -15,16 +15,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 
 [[package]]
-name = "ctor"
-version = "0.1.26"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6d2301688392eb071b0bf1a37be05c469d3cc4dbbd95df672fe28ab021e6a096"
-dependencies = [
- "quote",
- "syn",
-]
-
-[[package]]
 name = "libc"
 version = "0.2.139"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -56,7 +46,7 @@ checksum = "2f7254b99e31cad77da24b08ebf628882739a608578bb1bcdfc1f9c21260d7c0"
 
 [[package]]
 name = "poggers"
-version = "0.1.1-dev3"
+version = "0.1.1-dev4"
 dependencies = [
  "anyhow",
  "libc",
@@ -71,7 +61,6 @@ dependencies = [
 name = "poggers-derive"
 version = "0.1.1-dev5"
 dependencies = [
- "ctor",
  "proc-macro-crate",
  "proc-macro2",
  "quote",

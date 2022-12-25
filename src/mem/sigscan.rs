@@ -57,6 +57,7 @@ pub trait SigScan: Mem {
         for i in 0..page.len() {
             let mut okay = true;
             let mut offset = 0;
+            let mut skip_next = false;
 
             for ci in 0..pattern.len() {
                 let c = &pattern[ci..ci + 1];
@@ -65,7 +66,8 @@ pub trait SigScan: Mem {
                     continue;
                 } else if c == " " {
                     continue;
-                } else if ci % 3 != 0 {
+                } else if skip_next {
+                    skip_next = false;
                     continue;
                 }
                 let byte = page[i + offset];
@@ -75,6 +77,7 @@ pub trait SigScan: Mem {
                     break;
                 }
                 offset += 1;
+                skip_next = true;
             }
             if okay {
                 return Some(i);

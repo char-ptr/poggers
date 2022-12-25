@@ -17,10 +17,3 @@ proc-macro2= "1.0.43"
 quote = "1.0.21"
 syn = {version = "1.0.99", features = ["full"]}
 proc-macro-crate = "1.2.1"
-ctor = {version = "0.1.23", optional = true}
-
-[features]
-default = ["win"]
-win = []
-linux = ["ctor"]
-macos = ["ctor"]
