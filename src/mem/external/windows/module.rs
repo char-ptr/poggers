@@ -25,8 +25,11 @@ use crate::mem::traits::Mem;
 #[derive(Debug)]
 pub struct ExModule<'a> {
     pub(crate) process: &'a ExProcess,
+    /// The base address of the module.
     pub base_address: usize,
+    /// The size of the module.
     pub size: usize,
+    /// The name of the module.
     pub name: String,
     pub(crate) handle: HINSTANCE,
 }
@@ -48,7 +51,6 @@ impl<'a> ExModule<'a> {
     /// * [`ModuleError::UnableToOpenHandle`] - The module handle could not be retrieved.
     #[cfg(target_os = "windows")]
     pub fn new(name: &str, proc: &'a ExProcess) -> Result<Self> {
-        use std::ffi::CString;
 
         let mut me: MODULEENTRY32 = Default::default();
         me.dwSize = std::mem::size_of::<MODULEENTRY32>() as u32;
@@ -187,11 +189,13 @@ impl<'a> ExModule<'a> {
         // Err(anyhow!("lazy"))
     }
 }
-
+/// Errors which may occur when using a module.
 #[derive(Debug, Error)]
 pub enum ModuleError {
+    /// Unable to open handle
     #[error("Unable to open handle")]
     UnableToOpenHandle,
+    /// Unable to find handle for {0}
     #[error("No module found for {0}")]
     NoModuleFound(String),
 }

@@ -3,10 +3,13 @@ use anyhow::Result;
 use super::structures::Protections;
 
 
-
+/// trait which gives cross platform memory reading/writing etc.
 pub trait Mem {
+    /// If the platform requires protection to be changed before writing.
     const WRITE_REQUIRE_PROTECTION: bool = false;
+    /// If the platform requires protection to be changed before reading.
     const READ_REQUIRE_PROTECTION: bool = false;
+    /// The size of a page.
     const PAGE_SIZE: usize = 0x1000;
     /// Read <T> from memory at address <addr>
     /// This function is crossplatform.

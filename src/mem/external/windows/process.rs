@@ -68,10 +68,11 @@ impl<'a> ExProcess {
             name,
         })
     }
-
+    /// get the handle to the process
     pub fn get_handle(&self) -> &HANDLE {
         &self.handl
     }
+    /// return a [`Vec`] of [`ExPartialProcess`]s that are currently running
     pub fn get_processes() -> Result<Vec<ExPartialProcess>> {
         let mut processes = Vec::new();
         let snapshot = unsafe {
@@ -214,7 +215,7 @@ impl<'a> ExProcess {
     pub fn get_base_module(&'a self) -> Result<ExModule<'a>> {
         ExModule::new(&self.name, self)
     }
-
+    /// Get a module by name
     pub fn get_module(&'a self, name: &str) -> Result<ExModule<'a>> {
         ExModule::new(name, self)
     }
@@ -278,9 +279,12 @@ impl Mem for ExProcess {
     }
 }
 
+/// an enum which can be either a string or a u32
 #[derive(Debug)]
 pub enum StringOru32 {
+    /// a string
     String(String),
+    /// a u32
     U32(u32),
 }
 impl Display for StringOru32 {
@@ -321,12 +325,16 @@ impl Drop for ExProcess {
         }
     }
 }
+/// A Smaller process, which doesn't contain a handle to the process
 #[derive(Debug,Clone,Default)]
 pub struct ExPartialProcess {
+    /// the pid of the process
     pub pid: u32,
+    /// the name of the process
     pub name: String,
 }
 impl ExPartialProcess {
+    /// Create a new ExPartialProcess
     fn new(pid: u32, name: String) -> Self {
         Self { pid, name }
     }

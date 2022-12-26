@@ -1,18 +1,11 @@
 use std::{cell::RefCell, os::raw::c_void, rc::Rc, sync::Arc, mem::transmute_copy, ffi::CString};
 
 use windows::{Win32::{
-    Foundation::{CloseHandle, HANDLE, HINSTANCE},
+    Foundation::{HINSTANCE},
     System::{
-        Diagnostics::{
-            Debug,
-            ToolHelp::{
-                CreateToolhelp32Snapshot, Module32First, Module32Next, MODULEENTRY32,
-                TH32CS_SNAPMODULE, TH32CS_SNAPMODULE32,
-            },
-        },
-        Memory::{VirtualQueryEx, MEMORY_BASIC_INFORMATION, MEM_COMMIT, PAGE_NOACCESS, VirtualQuery}, LibraryLoader::{GetModuleHandleA, GetProcAddress}, ProcessStatus::{K32GetModuleInformation, MODULEINFO}, Threading::GetCurrentProcess,
+        Memory::{MEMORY_BASIC_INFORMATION, MEM_COMMIT, PAGE_NOACCESS, VirtualQuery}, LibraryLoader::{GetModuleHandleA, GetProcAddress}, ProcessStatus::{K32GetModuleInformation, MODULEINFO}, Threading::GetCurrentProcess,
     },
-}, core::PCSTR};
+}};
 
 use crate::mem::{sigscan::SigScan, traits::Mem, utils::make_lpcstr};
 
@@ -23,7 +16,9 @@ use thiserror::Error;
 /// A module in a process.
 #[derive(Debug)]
 pub struct InModule {
+    /// The base address of the module.
     pub base_address: usize,
+    /// The size of the module.
     pub size: usize,
     pub(crate) name: String,
     pub(crate) handle: HINSTANCE,
@@ -180,12 +175,16 @@ impl InModule {
     }
 }
 
+/// Errors that can occur when using InModule.
 #[derive(Debug, Error)]
 pub enum InModuleError {
+    /// Unable to open handle
     #[error("Unable to open handle")]
     UnableToOpenHandle,
+    /// No module found for {0}
     #[error("No module found for {0}")]
     NoModuleFound(String),
+    /// unable to get module information for {0}
     #[error("unable to get module information for {0}")]
     UnableToFetchInformation(String),
 }

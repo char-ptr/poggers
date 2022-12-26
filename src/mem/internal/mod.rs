@@ -10,7 +10,7 @@ pub mod tests {
     use crate::mem::utils::make_lpcstr;
 
     #[test]
-    pub fn find_ntdll () {
+    fn find_ntdll () {
         let module = super::windows::module::InModule::new("ntdll.dll").unwrap();
         println!("{:?}", module);
         assert_eq!(module.name, "ntdll.dll");
