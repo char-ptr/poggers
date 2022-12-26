@@ -60,8 +60,8 @@ impl<'a> ExModule<'a> {
         let mut result: Option<String> = None;
 
         let le_poggier = |m: &MODULEENTRY32| {
-            let f = m.szModule.iter().map(|x| x.0).collect::<Vec<u8>>();
-            let x_name = CString::from_vec_with_nul(f).unwrap().to_str().unwrap().to_string();
+            let f = m.szModule.iter().map(|x| x.0).take_while(|x| *x != 0).collect::<Vec<u8>>();
+            let x_name = String::from_utf8(f).unwrap();
             let x_name = x_name.trim_matches('\x00');
             return (x_name == name, x_name.to_string());
         };
