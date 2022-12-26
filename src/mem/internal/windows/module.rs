@@ -1,6 +1,6 @@
 use std::{cell::RefCell, os::raw::c_void, rc::Rc, sync::Arc, mem::transmute_copy, ffi::CString};
 
-use windows::Win32::{
+use windows::{Win32::{
     Foundation::{CloseHandle, HANDLE, HINSTANCE},
     System::{
         Diagnostics::{
@@ -12,7 +12,7 @@ use windows::Win32::{
         },
         Memory::{VirtualQueryEx, MEMORY_BASIC_INFORMATION, MEM_COMMIT, PAGE_NOACCESS, VirtualQuery}, LibraryLoader::{GetModuleHandleA, GetProcAddress}, ProcessStatus::{K32GetModuleInformation, MODULEINFO}, Threading::GetCurrentProcess,
     },
-};
+}, core::PCSTR};
 
 use crate::mem::{sigscan::SigScan, traits::Mem};
 
