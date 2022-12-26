@@ -56,7 +56,7 @@ checksum = "86f0b0d4bf799edbc74508c1e8bf170ff5f41238e5f8225603ca7caaae2b7860"
 
 [[package]]
 name = "poggers"
-version = "0.2.1"
+version = "0.2.2"
 dependencies = [
  "anyhow",
  "ctor",
