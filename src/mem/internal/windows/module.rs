@@ -1,4 +1,4 @@
-use std::{cell::RefCell, os::raw::c_void, rc::Rc, sync::Arc};
+use std::{cell::RefCell, os::raw::c_void, rc::Rc, sync::Arc, mem::transmute_copy};
 
 use windows::Win32::{
     Foundation::{CloseHandle, HANDLE, HINSTANCE},
@@ -10,7 +10,7 @@ use windows::Win32::{
                 TH32CS_SNAPMODULE, TH32CS_SNAPMODULE32,
             },
         },
-        Memory::{VirtualQueryEx, MEMORY_BASIC_INFORMATION, MEM_COMMIT, PAGE_NOACCESS, VirtualQuery}, LibraryLoader::GetModuleHandleA, ProcessStatus::{K32GetModuleInformation, MODULEINFO}, Threading::GetCurrentProcess,
+        Memory::{VirtualQueryEx, MEMORY_BASIC_INFORMATION, MEM_COMMIT, PAGE_NOACCESS, VirtualQuery}, LibraryLoader::{GetModuleHandleA, GetProcAddress}, ProcessStatus::{K32GetModuleInformation, MODULEINFO}, Threading::GetCurrentProcess,
     },
 };
 
@@ -66,7 +66,32 @@ impl InModule {
         })
     }
 
-    /// Pattern scan this module to find an address
+    /// Gets exported function/procedure from a module.
+    /// # Arguments
+    /// * `name` - Name of the exported symbol.
+    /// # Example
+    /// ```
+    /// use poggers::mem::internal::process::Process;
+    /// use poggers::mem::internal::module::InModule;
+    /// let module = InModule::new("ntdll.dll").unwrap();
+    /// let nt_query_info = module.get_process_address("NtQuerySystemInformation").unwrap();
+    /// ```
+    /// 
+    pub fn get_process_address<T>(&self, name: &str) -> Option<T> {
+        let lpc_name = windows::core::PCSTR::from_raw(format!("{}\n", name).as_ptr() as *const u8);
+
+        let result = unsafe { GetProcAddress(self.handle, lpc_name) };
+        result.map(|proc| unsafe { transmute_copy(&proc) })
+
+        // match unsafe { GetProcAddress(self.handle, lpc_name) } {
+        //     Some(proc) => {
+        //         proc
+        //     },
+        //     None => None
+        // }
+    }
+
+    /// Pattern scan this module to find an address.
     /// # Arguments
     /// * `pattern` - The pattern to scan for (IDA Style).
     /// # Example
@@ -117,7 +142,7 @@ impl InModule {
     }
 
 
-    /// Gets distance of address from base address
+    /// Gets distance of address from base address.
     /// # Arguments
     /// * `addr` - The address to find the relative distance.
     /// # Example
@@ -134,7 +159,7 @@ impl InModule {
 
     /// Gets pointer to data/address dynamically.
     /// # Arguments
-    /// * `addr` - Address to run function with;
+    /// * `addr` - Address to run function with.
     /// # Example
     /// ```
     /// use poggers::mem::internal::process::Process;
