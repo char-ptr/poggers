@@ -42,15 +42,3 @@ pub mod exports;
 
 // re exports
 pub use mem::*;
-pub use poggers_derive::create_entry;
-
-
-#[doc(hidden)]
-pub mod tests {
-    #[poggers_derive::create_entry]
-    fn deriv_test() -> Result<(),()> {
-        println!("pogg");
-        Ok(())
-    }
-    
-}

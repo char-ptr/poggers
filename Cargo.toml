@@ -1,6 +1,6 @@
 [package]
 name = "poggers"
-version = "0.2.2"
+version = "0.2.3"
 edition = "2021"
 description = "memory lib"
 license = "GPL-2.0"
@@ -20,7 +20,6 @@ members = ["poggers-derive"]
 anyhow = "1.0.68"
 thiserror = "1.0.38"
 log = "0.4.17"
-poggers-derive = {path="./poggers-derive", version="0.1.3"}
 
 [target.'cfg(target_os="windows")'.dependencies]
 windows = {version = "0.43.0",features = [
