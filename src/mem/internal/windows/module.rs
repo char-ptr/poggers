@@ -23,8 +23,8 @@ use thiserror::Error;
 /// A module in a process.
 #[derive(Debug)]
 pub struct InModule {
-    pub(crate) base_address: usize,
-    pub(crate) size: usize,
+    pub base_address: usize,
+    pub size: usize,
     pub(crate) name: String,
     pub(crate) handle: HINSTANCE,
 }
