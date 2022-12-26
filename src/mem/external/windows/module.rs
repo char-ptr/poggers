@@ -25,9 +25,9 @@ use crate::mem::traits::Mem;
 #[derive(Debug)]
 pub struct ExModule<'a> {
     pub(crate) process: &'a ExProcess,
-    pub(crate) base_address: usize,
-    pub(crate) size: usize,
-    pub(crate) name: String,
+    pub base_address: usize,
+    pub size: usize,
+    pub name: String,
     pub(crate) handle: HINSTANCE,
 }
 
