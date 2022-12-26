@@ -150,16 +150,17 @@ impl InModule {
     /// use poggers::mem::internal::process::Process;
     /// use poggers::mem::internal::module::InModule;
     /// let module = InModule::new("ntdll.dll").unwrap();
-    /// let relative = module.get_relative(0xDEADBEEF);
+    /// let relative = module.get_relative(0xDEADBEEF, 0x15);
     /// ```
     /// 
-    pub fn get_relative(&self, addr: usize) -> usize {
-        addr - self.base_address
+    pub fn get_relative(&self, addr: usize, offset:usize) -> usize {
+        (addr - self.base_address) + offset
     }
 
     /// Gets pointer to data/address dynamically.
     /// # Arguments
     /// * `addr` - Address to run function with.
+    /// * `offset` - Offset to add after address is solved.
     /// # Example
     /// ```
     /// use poggers::mem::internal::process::Process;
@@ -168,10 +169,14 @@ impl InModule {
     /// let actual_location = module.resolve_relative_ptr(0xDEADBEEF, 0x15);
     /// ```
     /// 
-    pub fn resolve_relative_ptr(&self, addr: usize, offset: u32) -> Result<usize> {
-        let real_offset = super::super::utils::read::<u32>(addr + offset as usize)?;
+    pub unsafe fn resolve_relative_ptr(&self, addr: usize, offset: usize) -> Result<usize> {
+        let real_offset = self.read::<u32>(addr)?;
         println!("Real offset: {:X?}", real_offset);
-        Ok(self.base_address + (self.get_relative(addr) + real_offset as usize))
+        let rel = self.get_relative(addr, offset);
+        let real = rel + real_offset as usize;
+        println!("Real: {:X?}", real);
+        Ok(self.base_address + real)
+        // Err(anyhow!("lazy"))
     }
 }
 

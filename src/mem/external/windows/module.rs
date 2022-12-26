@@ -149,10 +149,34 @@ impl<'a> ExModule<'a> {
         None
     }
 
+    /// Gets distance of address from base address.
+    /// # Arguments
+    /// * `addr` - The address to find the relative distance.
+    /// * `offset` - Offset to add after address is solved.
+    /// # Example
+    /// ```
+    /// use poggers::mem::internal::process::Process;
+    /// use poggers::mem::internal::module::InModule;
+    /// let module = InModule::new("ntdll.dll").unwrap();
+    /// let relative = module.get_relative(0xDEADBEEF, 0x15);
+    /// ```
+    /// 
     pub fn get_relative(&self, addr: usize,offset:usize) -> usize {
         (addr - self.base_address) + offset
     }
 
+    /// Gets pointer to data/address dynamically.
+    /// # Arguments
+    /// * `addr` - Address to run function with.
+    /// * `offset` - Offset to add after address is solved.
+    /// # Example
+    /// ```
+    /// use poggers::mem::internal::process::Process;
+    /// use poggers::mem::internal::module::InModule;
+    /// let module = InModule::new("ntdll.dll").unwrap();
+    /// let actual_location = module.resolve_relative_ptr(0xDEADBEEF, 0x15);
+    /// ```
+    /// 
     pub unsafe fn resolve_relative_ptr(&self, addr: usize, offset: usize) -> Result<usize> {
         let real_offset = self.read::<u32>(addr)?;
         println!("Real offset: {:X?}", real_offset);
