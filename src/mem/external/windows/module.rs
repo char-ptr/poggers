@@ -48,6 +48,8 @@ impl<'a> ExModule<'a> {
     /// * [`ModuleError::UnableToOpenHandle`] - The module handle could not be retrieved.
     #[cfg(target_os = "windows")]
     pub fn new(name: &str, proc: &'a ExProcess) -> Result<Self> {
+        use std::ffi::CString;
+
         let mut me: MODULEENTRY32 = Default::default();
         me.dwSize = std::mem::size_of::<MODULEENTRY32>() as u32;
 
@@ -59,7 +61,7 @@ impl<'a> ExModule<'a> {
 
         let le_poggier = |m: &MODULEENTRY32| {
             let f = m.szModule.iter().map(|x| x.0).collect::<Vec<u8>>();
-            let x_name = String::from_utf8_lossy(&f);
+            let x_name = CString::from_vec_with_nul(f).unwrap().to_str().unwrap().to_string();
             let x_name = x_name.trim_matches('\x00');
             return (x_name == name, x_name.to_string());
         };
