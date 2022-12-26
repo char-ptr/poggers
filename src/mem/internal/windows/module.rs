@@ -1,4 +1,4 @@
-use std::{cell::RefCell, os::raw::c_void, rc::Rc, sync::Arc, mem::transmute_copy};
+use std::{cell::RefCell, os::raw::c_void, rc::Rc, sync::Arc, mem::transmute_copy, ffi::CString};
 
 use windows::Win32::{
     Foundation::{CloseHandle, HANDLE, HINSTANCE},
