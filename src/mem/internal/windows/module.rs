@@ -44,7 +44,7 @@ impl InModule {
     /// * [`ModuleError::UnableToOpenHandle`] - The module handle could not be retrieved.
     pub fn new(name: &str) -> Result<Self> {
 
-        let lpc_str = windows::core::PCSTR::from_raw(format!("{}\n", name).as_ptr() as *const u8);
+        let lpc_str = PCSTR::from_raw(CString::new(name).unwrap().as_ptr() as *const u8);
 
         let module = unsafe {GetModuleHandleA(lpc_str)}.or(Err(InModuleError::NoModuleFound(name.to_string())))?;
 
@@ -70,7 +70,7 @@ impl InModule {
     /// # Arguments
     /// * `name` - Name of the exported symbol.
     /// # Example
-    /// ```
+    /// ``` 
     /// use poggers::mem::internal::process::Process;
     /// use poggers::mem::internal::module::InModule;
     /// let module = InModule::new("ntdll.dll").unwrap();
@@ -78,10 +78,10 @@ impl InModule {
     /// ```
     /// 
     pub fn get_process_address<T>(&self, name: &str) -> Option<T> {
-        let lpc_name = windows::core::PCSTR::from_raw(format!("{}\n", name).as_ptr() as *const u8);
+        let lpc_name = PCSTR::from_raw(CString::new(name).unwrap().as_ptr() as *const u8);
 
         let result = unsafe { GetProcAddress(self.handle, lpc_name) };
-        result.map(|proc| unsafe { transmute_copy(&proc) })
+        result.map(|proc| unsafe { std::mem::transmute_copy(&proc) })
 
         // match unsafe { GetProcAddress(self.handle, lpc_name) } {
         //     Some(proc) => {

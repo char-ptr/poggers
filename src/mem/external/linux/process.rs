@@ -14,7 +14,7 @@ pub struct ExProcess {
     pub(crate) name: String,
 }
 impl ExProcess {
-    pub fn with_pid(pid: Pid) -> Result<ExProcess> {
+    pub fn new_from_pid(pid: Pid) -> Result<ExProcess> {
         let cmdline = OpenOptions::new().read(true).open(format!("/proc/{}/cmdline", pid))?;
         let contents = BufReader::new(cmdline).lines().next().ok_or(anyhow!("unable to read contents of cmdline"))??;
         let path = std::path::Path::new(contents.split_whitespace().next().ok_or(anyhow!("unable to get first word of cmdline"))?);
@@ -27,7 +27,7 @@ impl ExProcess {
             name,
         })
     }
-    pub fn with_name(wname: &str) -> Result<ExProcess> {
+    pub fn new_from_name(wname: String) -> Result<ExProcess> {
         for entry in std::fs::read_dir("/proc")? {
             let entry = entry?;
             if entry.file_name().to_string_lossy().parse::<Pid>().is_err() {

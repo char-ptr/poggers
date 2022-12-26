@@ -1,3 +1,4 @@
+pub mod module;
 pub mod process;
 
 #[cfg(test)]
@@ -7,7 +8,7 @@ mod tests {
 
     #[test]
     fn open_process() {
-        let process = ExProcess::with_name("nano").unwrap();
+        let process = ExProcess::new_from_name("nano".to_string()).unwrap();
         println!("Process: {:?}", process);
     }
 

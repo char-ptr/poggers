@@ -9,3 +9,4 @@ pub mod sigscan;
 pub mod external;
 pub mod internal;
 pub mod structures;
+pub mod utils;
