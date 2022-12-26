@@ -59,7 +59,7 @@ impl InModule {
         }
 
         Ok(Self {
-            base_address: mod_info.EntryPoint as usize,
+            base_address: module.0 as usize,
             size: mod_info.SizeOfImage as usize,
             name: name.to_string(),
             handle: module,
