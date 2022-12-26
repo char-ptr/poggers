@@ -14,7 +14,7 @@ use windows::{Win32::{
     },
 }, core::PCSTR};
 
-use crate::mem::{sigscan::SigScan, traits::Mem};
+use crate::mem::{sigscan::SigScan, traits::Mem, utils::make_lpcstr};
 
 use anyhow::{Context, Result};
 use thiserror::Error;
@@ -44,7 +44,7 @@ impl InModule {
     /// * [`ModuleError::UnableToOpenHandle`] - The module handle could not be retrieved.
     pub fn new(name: &str) -> Result<Self> {
 
-        let lpc_str = PCSTR::from_raw(CString::new(name).unwrap().as_ptr() as *const u8);
+        let lpc_str = make_lpcstr(name);
 
         let module = unsafe {GetModuleHandleA(lpc_str)}.or(Err(InModuleError::NoModuleFound(name.to_string())))?;
 
@@ -78,7 +78,7 @@ impl InModule {
     /// ```
     /// 
     pub fn get_process_address<T>(&self, name: &str) -> Option<T> {
-        let lpc_name = PCSTR::from_raw(CString::new(name).unwrap().as_ptr() as *const u8);
+        let lpc_name = make_lpcstr(name);
 
         let result = unsafe { GetProcAddress(self.handle, lpc_name) };
         result.map(|proc| unsafe { std::mem::transmute_copy(&proc) })
