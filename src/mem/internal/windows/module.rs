@@ -30,19 +30,17 @@ pub struct InModule {
 }
 
 impl InModule {
-    /// create a new module object from a process and a module name.
+    /// create a new module object from current process and a module name.
     /// # Arguments
     /// * `name` - The name of the module to find.
-    /// * `process` - The process to find the module in.
     /// # Example
     /// ```
     /// use poggers::mem::internal::process::Process;
     /// use poggers::mem::internal::module::InModule;
-    /// let process = Process::new("notepad.exe").unwrap();
-    /// let module = InModule::new("user32.dll", &process).unwrap();
+    /// let module = InModule::new("user32.dll").unwrap();
     /// ```
     /// # Errors
-    /// * [`ModuleError::NoModuleFound`] - The module was not found in the process.
+    /// * [`ModuleError::NoModuleFound`] - The module was not found in current process.
     /// * [`ModuleError::UnableToOpenHandle`] - The module handle could not be retrieved.
     pub fn new(name: &str) -> Result<Self> {
 
@@ -75,9 +73,8 @@ impl InModule {
     /// ```
     /// use poggers::mem::internal::process::Process;
     /// use poggers::mem::internal::module::InModule;
-    /// let process = Process::new("notepad.exe").unwrap();
-    /// let module = InModule::new("user32.dll", &process).unwrap();
-    /// let address = module.pattern_scan("48 8B 05 ? ? ? ? 48 8B 88 ? ? ? ? 48 85 C9 74 0A").unwrap();
+    /// let module = InModule::new("user32.dll").unwrap();
+    /// let address = module.scan_virtual("48 8B 05 ? ? ? ? 48 8B 88 ? ? ? ? 48 85 C9 74 0A").unwrap();
     /// ```
     /// 
     pub fn scan_virtual(&self, pattern: &str) -> Option<usize> {
@@ -119,10 +116,33 @@ impl InModule {
         None
     }
 
+
+    /// Gets distance of address from base address
+    /// # Arguments
+    /// * `addr` - The address to find the relative distance.
+    /// # Example
+    /// ```
+    /// use poggers::mem::internal::process::Process;
+    /// use poggers::mem::internal::module::InModule;
+    /// let module = InModule::new("ntdll.dll").unwrap();
+    /// let relative = module.get_relative(0xDEADBEEF);
+    /// ```
+    /// 
     pub fn get_relative(&self, addr: usize) -> usize {
         addr - self.base_address
     }
 
+    /// Gets pointer to data/address dynamically.
+    /// # Arguments
+    /// * `addr` - Address to run function with;
+    /// # Example
+    /// ```
+    /// use poggers::mem::internal::process::Process;
+    /// use poggers::mem::internal::module::InModule;
+    /// let module = InModule::new("ntdll.dll").unwrap();
+    /// let actual_location = module.resolve_relative_ptr(0xDEADBEEF, 0x15);
+    /// ```
+    /// 
     pub fn resolve_relative_ptr(&self, addr: usize, offset: u32) -> Result<usize> {
         let real_offset = super::super::utils::read::<u32>(addr + offset as usize)?;
         println!("Real offset: {:X?}", real_offset);
