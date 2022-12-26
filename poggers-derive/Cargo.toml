@@ -1,11 +1,16 @@
 [package]
 name = "poggers-derive"
-version = "0.1.2"
+version = "0.1.3"
 edition = "2021"
 description = "traits for poggers"
 license = "GPL-2.0"
 authors = ["luna <luna@aixeria.com>","VilotStar <macbookairuser12@priest.com>"]
 repository = "https://github.com/pozm/poggers"
+
+[package.metadata.docs.rs]
+default-target = "x86_64-pc-windows-msvc"
+targets = ["x86_64-pc-windows-msvc","x86_64-unknown-linux-gnu"]
+
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
