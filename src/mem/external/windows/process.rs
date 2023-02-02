@@ -18,7 +18,7 @@ use windows::Win32::{
             PAGE_READWRITE,
         },
         ProcessStatus::K32GetModuleFileNameExW,
-        Threading::{OpenProcess, PROCESS_ALL_ACCESS, PROCESS_QUERY_INFORMATION, PROCESS_VM_READ},
+        Threading::{OpenProcess, PROCESS_ALL_ACCESS, PROCESS_QUERY_INFORMATION, PROCESS_VM_READ, GetExitCodeProcess},
     },
 };
 
@@ -72,6 +72,19 @@ impl<'a> ExProcess {
     pub fn get_handle(&self) -> &HANDLE {
         &self.handl
     }
+    /// check that the process is still running
+    pub fn alive(&self) -> bool {
+        let mut exit_code: u32 = 0;
+        unsafe {
+            GetExitCodeProcess(
+                self.handl,
+                &mut exit_code as *mut u32,
+            )
+        }
+        .as_bool()
+            && exit_code == 259
+    }
+
     /// return a [`Vec`] of [`ExPartialProcess`]s that are currently running
     pub fn get_processes() -> Result<Vec<ExPartialProcess>> {
         let mut processes = Vec::new();
@@ -146,7 +159,8 @@ impl<'a> ExProcess {
         result
             .ok_or(ProcessError::NoProcessFound(StringOru32::String(proc_name.to_string())).into())
     }
-    fn get_name_from_pid(process_id: u32) -> Result<String> {
+    /// get the name of the process
+    pub fn get_name_from_pid(process_id: u32) -> Result<String> {
         if process_id == 0 {
             return Err(ProcessError::InvalidPid(process_id).into());
         }
@@ -338,17 +352,13 @@ impl ExPartialProcess {
     fn new(pid: u32, name: String) -> Self {
         Self { pid, name }
     }
+    /// convert the ExPartialProcess into an ExProcess
+    fn full(self) -> Result<ExProcess> {
+        ExProcess::new_from_pid(self.pid)
+    }
 }
-
-
-
-// impl TryFrom<ExPartialProcess> for ExProcess {
-//     fn try_from(value: ExPartialProcess) -> Result<Self, ProcessError> {
-//         Self::new_from_pid(value.pid).map_err(|x| x.into())
-//     }
-// }
-impl From<ExPartialProcess> for ExProcess {
-    fn from(value: ExPartialProcess) -> Self {
-        Self::new_from_pid(value.pid).unwrap()
+impl std::cmp::PartialEq for ExPartialProcess {
+    fn eq(&self, other: &Self) -> bool {
+        self.pid == other.pid
     }
 }

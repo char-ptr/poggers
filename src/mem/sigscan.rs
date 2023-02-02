@@ -85,4 +85,17 @@ pub trait SigScan: Mem {
         }
         None
     }
+    /// scan for a value of <T>
+    fn scan_batch_value<T : Sized>(&self, val: &T, page: &Vec<u8>) -> Option<usize> {
+        let type_size = std::mem::size_of::<T>();
+        let mut val_arr = vec![0; type_size];
+        unsafe {(val as *const T as *const u8).copy_to_nonoverlapping(val_arr.as_mut_ptr(), type_size) };
+        for (i,val) in page.chunks(type_size).enumerate() {
+            // println!("val in mem :{:X?} - looking for: {:X?}", &val, &val_arr);
+            if val == val_arr {
+                return Some(i * type_size);
+            }
+        }
+        None
+    }
 }

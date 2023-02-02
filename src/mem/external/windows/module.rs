@@ -150,6 +150,44 @@ impl<'a> ExModule<'a> {
         }
         None
     }
+    /// scan pages for a value of <T>
+    pub unsafe fn scan_virtual_value<T:Sized>(&self, val: &T) -> Option<usize> {
+        let mut mem_info: MEMORY_BASIC_INFORMATION = Default::default();
+        mem_info.RegionSize = 0x4096;
+
+        let mut addr = self.base_address;
+
+        loop {
+            if addr >= self.base_address + self.size {
+                break;
+            }
+
+            let worky = unsafe {
+                VirtualQueryEx(
+                    self.process.handl,
+                    Some(addr as *const c_void),
+                    &mut mem_info,
+                    std::mem::size_of::<MEMORY_BASIC_INFORMATION>(),
+                )
+            };
+            if mem_info.Protect == PAGE_NOACCESS {
+                addr += mem_info.RegionSize as usize;
+                continue;
+            }
+
+            let page = self
+                .read_sized(addr, mem_info.RegionSize - 1)
+                .ok()?;
+            let scan_res = self.scan_batch_value(val, &page);
+
+            if let Some(result) = scan_res {
+                println!("Found pattern at {:#x}", scan_res.unwrap());
+                return Some(addr + result);
+            }
+            addr += mem_info.RegionSize as usize;
+        }
+        None
+    }
 
     /// Gets distance of address from base address.
     /// # Arguments
