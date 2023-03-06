@@ -361,7 +361,7 @@ impl ExPartialProcess {
         Self { pid, name }
     }
     /// convert the ExPartialProcess into an ExProcess
-    fn full(self) -> Result<ExProcess> {
+    pub fn full(self) -> Result<ExProcess> {
         ExProcess::new_from_pid(self.pid)
     }
 }
