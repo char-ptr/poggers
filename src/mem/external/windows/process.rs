@@ -18,7 +18,7 @@ use windows::Win32::{
             PAGE_READWRITE,
         },
         ProcessStatus::K32GetModuleFileNameExW,
-        Threading::{OpenProcess, PROCESS_ALL_ACCESS, PROCESS_QUERY_INFORMATION, PROCESS_VM_READ, GetExitCodeProcess},
+        Threading::{OpenProcess, PROCESS_ALL_ACCESS, PROCESS_QUERY_INFORMATION, PROCESS_VM_READ, GetExitCodeProcess, TerminateProcess},
     },
 };
 
@@ -232,6 +232,14 @@ impl<'a> ExProcess {
     /// Get a module by name
     pub fn get_module(&'a self, name: &str) -> Result<ExModule<'a>> {
         ExModule::new(name, self)
+    }
+
+    /// kill the process, will always exit with code 0
+    pub fn kill(&self) -> bool {
+        unsafe {
+            TerminateProcess(self.handl, 0).as_bool()
+        }
+        
     }
 
 

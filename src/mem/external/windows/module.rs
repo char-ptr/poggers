@@ -151,7 +151,7 @@ impl<'a> ExModule<'a> {
         None
     }
     /// scan pages for a value of <T>
-    pub unsafe fn scan_virtual_value<T:Sized>(&self, val: &T) -> Option<usize> {
+    pub unsafe fn scan_virtual_value<T>(&self, val: &T) -> Option<usize> {
         let mut mem_info: MEMORY_BASIC_INFORMATION = Default::default();
         mem_info.RegionSize = 0x4096;
 
