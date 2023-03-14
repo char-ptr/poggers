@@ -1,4 +1,4 @@
-use std::{cell::RefCell, os::raw::c_void, rc::Rc, sync::Arc, mem::transmute_copy, ffi::CString};
+use std::{os::raw::c_void};
 
 use windows::{Win32::{
     Foundation::{HINSTANCE},
@@ -9,7 +9,7 @@ use windows::{Win32::{
 
 use crate::mem::{sigscan::SigScan, traits::Mem, utils::make_lpcstr};
 
-use anyhow::{Context, Result};
+use anyhow::{Result};
 use thiserror::Error;
 
 
@@ -25,6 +25,10 @@ pub struct InModule {
 }
 
 impl InModule {
+    /// gets the module name
+    pub fn get_name(&self) -> &str {
+        &self.name
+    }
     /// create a new module object from current process and a module name.
     /// # Arguments
     /// * `name` - The name of the module to find.
@@ -110,7 +114,7 @@ impl InModule {
                 break;
             }
 
-            let worky = unsafe {
+            let _worky = unsafe {
                 VirtualQuery(
                     Some(addr as *const c_void),
                     &mut mem_info,
@@ -198,8 +202,8 @@ impl Mem for InModule {
         (addr as *mut u8).copy_from_nonoverlapping(data, size);
         Ok(())
     }
-    unsafe fn alter_protection(&self,addr:usize, size: usize, prot: crate::mem::structures::Protections) -> Result<crate::mem::structures::Protections> {
-        Ok(prot)
+    unsafe fn alter_protection(&self,_addr:usize, _size: usize, _prot: crate::mem::structures::Protections) -> Result<crate::mem::structures::Protections> {
+        todo!() 
     }
 }
 impl SigScan for InModule {}

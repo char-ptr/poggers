@@ -28,7 +28,7 @@ pub trait SigScan: Mem {
                     continue;
                 }
                 let byte = match Self::read::<u8>(self, from + i + offset) {
-                    Err(e) => {
+                    Err(_) => {
                         okay = false;
                         break;
                     }

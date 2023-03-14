@@ -1,31 +1,26 @@
-use anyhow::{Context, Result};
-use std::{error::Error, ffi::c_void, fmt::Display};
+use anyhow::{Result};
+use std::{ffi::c_void, fmt::Display};
 use thiserror::Error;
 
 use windows::Win32::{
-    Foundation::{CloseHandle, GetLastError, HANDLE, HINSTANCE, MAX_PATH},
+    Foundation::{CloseHandle, GetLastError, HANDLE, MAX_PATH},
     System::{
         Diagnostics::{
             Debug::{ReadProcessMemory, WriteProcessMemory},
-            ToolHelp::{
-                CreateToolhelp32Snapshot, Process32First, Process32Next,
-                Toolhelp32ReadProcessMemory, PROCESSENTRY32, TH32CS_SNAPPROCESS,
-            },
         },
-        LibraryLoader::GetModuleFileNameW,
         Memory::{
-            VirtualProtectEx, PAGE_EXECUTE_READWRITE, PAGE_PROTECTION_FLAGS, PAGE_READONLY,
-            PAGE_READWRITE,
+            VirtualProtectEx,
         },
         ProcessStatus::K32GetModuleFileNameExW,
-        Threading::{OpenProcess, PROCESS_ALL_ACCESS, PROCESS_QUERY_INFORMATION, PROCESS_VM_READ, GetExitCodeProcess, TerminateProcess},
+        Threading::{
+            GetExitCodeProcess, OpenProcess, TerminateProcess, PROCESS_ALL_ACCESS,
+        },
     },
 };
 
 use crate::mem::traits::Mem;
 
-use super::module::ExModule;
-
+use super::{module::ExModule, create_snapshot::{ToolSnapshot, STProcess}};
 
 /// A Class describing a windows process
 #[derive(Debug)]
@@ -43,8 +38,8 @@ impl<'a> ExProcess {
     /// let proc = ExProcess::new(1234).unwrap();
     /// ```
     pub fn new_from_pid(pid: u32) -> Result<ExProcess> {
-        let process_name = Self::get_name_from_pid(pid)?;
         let handle = Self::open_handle(pid)?;
+        let process_name = Self::get_name_from_pid(pid,&handle)?;
 
         Ok(ExProcess {
             handl: handle,
@@ -75,110 +70,24 @@ impl<'a> ExProcess {
     /// check that the process is still running
     pub fn alive(&self) -> bool {
         let mut exit_code: u32 = 0;
-        unsafe {
-            GetExitCodeProcess(
-                self.handl,
-                &mut exit_code as *mut u32,
-            )
-        }
-        .as_bool()
+        unsafe { GetExitCodeProcess(self.handl, &mut exit_code as *mut u32) }.as_bool()
             && exit_code == 259
     }
 
-    /// return a [`Vec`] of [`ExPartialProcess`]s that are currently running
-    pub fn get_processes() -> Result<Vec<ExPartialProcess>> {
-        let mut processes = Vec::new();
-        let snapshot = unsafe {
-            CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0)
-                .ok()
-                .context("Failed to create snapshot")?
-        };
-        let mut entry = PROCESSENTRY32::default();
-        entry.dwSize = std::mem::size_of::<PROCESSENTRY32>() as u32;
-        unsafe {Process32First(snapshot, &mut entry)};
-        {
-            let f = entry.szExeFile.iter().take_while(|x| x.0 != 0).map(|x| x.0).collect::<Vec<u8>>();
-            processes.push(ExPartialProcess {
-                pid: entry.th32ProcessID,
-                name: String::from_utf8_lossy(&f).to_string(),
-            });
-            
-        }
-        while unsafe { Process32Next(snapshot, &mut entry) }.as_bool() {
-            let f = entry.szExeFile.iter().take_while(|x| x.0 != 0).map(|x| x.0).collect::<Vec<u8>>();
-            processes.push(ExPartialProcess {
-                pid: entry.th32ProcessID,
-                name: String::from_utf8_lossy(&f).to_string(),
-            });
-        }
-        unsafe {
-            CloseHandle(snapshot);
-        }
-        Ok(processes)
-    }
-
     fn get_pid_from_name(proc_name: &str) -> Result<u32> {
-        let mut pe: PROCESSENTRY32 = Default::default();
-        pe.dwSize = std::mem::size_of::<PROCESSENTRY32>() as u32;
-
-        let hsnapshot = unsafe { CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0) }.or(Err(
-            ProcessError::UnableToOpenProcess(StringOru32::String(proc_name.to_string())),
-        )).context("unable to create tool help 32 snapshot")?;
-
-        let mut result: Option<u32> = None;
-        let le_poggier = |p: &PROCESSENTRY32| {
-            let f = p.szExeFile.iter().take_while(|x| x.0 != 0).map(|x| x.0).collect::<Vec<u8>>();
-            let name = String::from_utf8_lossy(&f);
-            return name == proc_name;
-        };
-
-        let hres = unsafe { Process32First(hsnapshot, &mut pe) };
-        if !hres.as_bool() {
-            return Err(ProcessError::UnableToOpenProcess(StringOru32::String(
-                proc_name.to_string(),
-            ))
-            .into());
-        }
-        if le_poggier(&pe) {
-            result.replace(pe.th32ProcessID);
-        }
-        while unsafe { Process32Next(hsnapshot, &mut pe) }.as_bool()
-            && result.is_none()
-            && pe.th32ProcessID != 0
-        {
-            if le_poggier(&pe) {
-                result.replace(pe.th32ProcessID);
-                break;
-            } else {
-                continue;
-            }
-        }
-        unsafe {
-            CloseHandle(hsnapshot);
-        }
-        result
+        let mut snapshot = ToolSnapshot::new_process()?;
+        snapshot
+            .find(|x| x.exe_path == proc_name)
+            .map(|x| x.id)
             .ok_or(ProcessError::NoProcessFound(StringOru32::String(proc_name.to_string())).into())
     }
     /// get the name of the process
-    pub fn get_name_from_pid(process_id: u32) -> Result<String> {
+    pub fn get_name_from_pid(process_id: u32, hndl : &HANDLE) -> Result<String> {
         if process_id == 0 {
             return Err(ProcessError::InvalidPid(process_id).into());
         }
-        let hndl = unsafe {
-            OpenProcess(
-                PROCESS_QUERY_INFORMATION | PROCESS_VM_READ,
-                false,
-                process_id,
-            )
-            .or(Err(ProcessError::UnableToOpenProcess(StringOru32::U32(
-                process_id,
-            ))))?
-        };
-        if hndl.is_invalid() {
-            return Err(ProcessError::UnableToOpenProcess(StringOru32::U32(process_id)).into());
-        }
         let mut buffer = [0u16; MAX_PATH as usize];
-        unsafe { K32GetModuleFileNameExW(hndl, None, &mut buffer) };
+        unsafe { K32GetModuleFileNameExW(hndl.clone(), None, &mut buffer) };
         // println!("{:?}", buffer);
         Ok(String::from_utf16_lossy(&buffer)
             .rsplit("\\")
@@ -235,18 +144,13 @@ impl<'a> ExProcess {
     }
 
     /// kill the process, will always exit with code 0
-    pub fn kill(&self) -> bool {
-        unsafe {
-            TerminateProcess(self.handl, 0).as_bool()
-        }
-        
+    pub fn kill(self) -> bool {
+        unsafe { TerminateProcess(self.handl, 0).as_bool() }
     }
-
-
 }
 
 impl Mem for ExProcess {
-    unsafe fn raw_read(&self, addr: usize,data: *mut u8, size: usize) -> Result<()> {
+    unsafe fn raw_read(&self, addr: usize, data: *mut u8, size: usize) -> Result<()> {
         let res = ReadProcessMemory(
             self.handl,
             addr as *const c_void,
@@ -255,14 +159,13 @@ impl Mem for ExProcess {
             Some(&mut 0),
         );
 
-
         if res.as_bool() {
             Ok(())
         } else {
             Err(ProcessError::UnableToReadMemory(addr as usize).into())
         }
     }
-    unsafe fn raw_write(&self, addr: usize,data: *const u8, size: usize) -> Result<()> {
+    unsafe fn raw_write(&self, addr: usize, data: *const u8, size: usize) -> Result<()> {
         let res = WriteProcessMemory(
             self.handl,
             addr as *const c_void,
@@ -276,7 +179,12 @@ impl Mem for ExProcess {
             Err(ProcessError::UnableToWriteMemory(addr as usize).into())
         }
     }
-    unsafe fn alter_protection(&self,addr:usize, size: usize, prot: crate::mem::structures::Protections) -> Result<crate::mem::structures::Protections> {
+    unsafe fn alter_protection(
+        &self,
+        addr: usize,
+        size: usize,
+        prot: crate::mem::structures::Protections,
+    ) -> Result<crate::mem::structures::Protections> {
         let mut old_protect = Default::default();
         let res = unsafe {
             VirtualProtectEx(
@@ -297,7 +205,6 @@ impl Mem for ExProcess {
             }
             Err(ProcessError::UnableToChangeProtection(addr as usize).into())
         }
-
     }
 }
 
@@ -347,26 +254,8 @@ impl Drop for ExProcess {
         }
     }
 }
-/// A Smaller process, which doesn't contain a handle to the process
-#[derive(Debug,Clone,Default)]
-pub struct ExPartialProcess {
-    /// the pid of the process
-    pub pid: u32,
-    /// the name of the process
-    pub name: String,
-}
-impl ExPartialProcess {
-    /// Create a new ExPartialProcess
-    fn new(pid: u32, name: String) -> Self {
-        Self { pid, name }
-    }
-    /// convert the ExPartialProcess into an ExProcess
-    pub fn full(self) -> Result<ExProcess> {
-        ExProcess::new_from_pid(self.pid)
-    }
-}
-impl std::cmp::PartialEq for ExPartialProcess {
-    fn eq(&self, other: &Self) -> bool {
-        self.pid == other.pid
+impl Into<ExProcess> for STProcess {
+    fn into(self) -> ExProcess {
+        ExProcess::new_from_pid(self.id).unwrap()
     }
 }

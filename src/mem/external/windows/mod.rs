@@ -1,8 +1,11 @@
 /// a wrapper around the platform specific version.
 pub mod process;
+/// a wrapper around the platform specific version.
 pub mod module;
+/// Create a snapshot of the processes or modules
+pub mod create_snapshot;
 
-
+#[cfg(test)]
 mod tests {
     use std::{
         io::{BufRead, BufReader},
@@ -11,7 +14,33 @@ mod tests {
     
     use crate::mem::traits::Mem;
     use super::process::*;
-    use super::module::*;
+    
+    #[test]
+    fn read_name_search() {
+        let proc = Command::new("./test-utils/rw-test.exe")
+            .stdout(Stdio::piped())
+            .spawn()
+            .expect("bruh");
+        let l = BufReader::new(proc.stdout.unwrap());
+        let mut lines = l.lines();
+        let current_val = lines.next().unwrap().unwrap();
+
+        println!("Current value: {}", current_val);
+        let xproc = ExProcess::new_from_name("rw-test.exe".to_string()).unwrap();
+
+        let base_mod = xproc.get_base_module().unwrap();
+
+        println!(
+            "predicted = {:X} | b = {:X}",
+            base_mod.base_address + 0x43000,
+            base_mod.base_address
+        );
+
+        let offset = base_mod.base_address + 0x43000;
+        let read_val = unsafe {xproc.read::<u32>(offset).unwrap()};
+
+        assert_eq!(current_val.parse::<u32>().unwrap(), read_val);
+    }
     #[test]
     fn read() {
         let proc = Command::new("./test-utils/rw-test.exe")

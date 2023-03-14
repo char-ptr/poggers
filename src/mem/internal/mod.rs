@@ -1,13 +1,12 @@
 
 #[cfg(windows)]
+/// Windows specific internal memory stuff
 pub mod windows;
+/// cross platform utilities
 pub mod utils;
 
 #[cfg(test)]
 pub mod tests {
-    use windows::Win32::{System::LibraryLoader::LoadLibraryA, Foundation::GetLastError};
-
-    use crate::mem::utils::make_lpcstr;
 
     #[test]
     fn find_ntdll () {

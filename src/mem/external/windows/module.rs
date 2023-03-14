@@ -1,15 +1,8 @@
-use std::{cell::RefCell, os::raw::c_void, rc::Rc, sync::Arc};
+use std::{os::raw::c_void};
 
 use windows::Win32::{
-    Foundation::{CloseHandle, HANDLE, HINSTANCE},
+    Foundation::{HINSTANCE},
     System::{
-        Diagnostics::{
-            Debug,
-            ToolHelp::{
-                CreateToolhelp32Snapshot, Module32First, Module32Next, MODULEENTRY32,
-                TH32CS_SNAPMODULE, TH32CS_SNAPMODULE32,
-            },
-        },
         Memory::{VirtualQueryEx, MEMORY_BASIC_INFORMATION, MEM_COMMIT, PAGE_NOACCESS},
     },
 };
@@ -17,7 +10,7 @@ use windows::Win32::{
 use crate::mem::sigscan::SigScan;
 
 use super::process::ExProcess;
-use anyhow::{Context, Result, anyhow};
+use anyhow::{Result};
 use thiserror::Error;
 use crate::mem::traits::Mem;
 
@@ -35,6 +28,10 @@ pub struct ExModule<'a> {
 }
 
 impl<'a> ExModule<'a> {
+    /// gets the module handle
+    pub fn get_handle(&self) -> &HINSTANCE {
+        &self.handle
+    }
     /// create a new module object from a process and a module name.
     /// # Arguments
     /// * `name` - The name of the module to find.
@@ -51,53 +48,17 @@ impl<'a> ExModule<'a> {
     /// * [`ModuleError::UnableToOpenHandle`] - The module handle could not be retrieved.
     #[cfg(target_os = "windows")]
     pub fn new(name: &str, proc: &'a ExProcess) -> Result<Self> {
+        use super::create_snapshot::ToolSnapshot;
 
-        let mut me: MODULEENTRY32 = Default::default();
-        me.dwSize = std::mem::size_of::<MODULEENTRY32>() as u32;
 
-        let snap_handl =
-            unsafe { CreateToolhelp32Snapshot(TH32CS_SNAPMODULE | TH32CS_SNAPMODULE32, proc.pid) }
-                .or(Err(ModuleError::UnableToOpenHandle))?;
-
-        let mut result: Option<String> = None;
-
-        let le_poggier = |m: &MODULEENTRY32| {
-            let f = m.szModule.iter().map(|x| x.0).take_while(|x| *x != 0).collect::<Vec<u8>>();
-            let x_name = String::from_utf8(f).unwrap();
-            let x_name = x_name.trim_matches('\x00');
-            return (x_name == name, x_name.to_string());
-        };
-
-        let hres = unsafe { Module32First(snap_handl, &mut me) };
-        if !hres.as_bool() {
-            return Err(ModuleError::UnableToOpenHandle.into());
-        }
-        let (is_poggier, mod_name) = le_poggier(&me);
-        if is_poggier {
-            result.replace(mod_name);
-        } else {
-            while unsafe { Module32Next(snap_handl, &mut me) }.as_bool()
-                && result.is_none()
-                && me.th32ProcessID != 0
-            {
-                let (is_ok, mod_name) = le_poggier(&me);
-                if is_ok {
-                    result = Some(mod_name);
-                    break;
-                } else {
-                    continue;
-                }
-            }
-        }
-        if result.is_none() {
-            return Err(ModuleError::NoModuleFound(name.to_string()).into());
-        }
+        let snapshot = ToolSnapshot::new_module(Some(proc.pid)).unwrap();
+        let res = snapshot.filter(|module| module.name == name).next().ok_or(ModuleError::NoModuleFound(name.to_string()))?;
         Ok(Self {
             process: proc,
-            base_address: me.modBaseAddr as usize,
-            size: me.modBaseSize as usize,
-            name: result.unwrap(),
-            handle: me.hModule,
+            base_address: res.base_address,
+            size: res.size,
+            name: res.name,
+            handle: res.handle
         })
     }
 
@@ -124,7 +85,7 @@ impl<'a> ExModule<'a> {
                 break;
             }
 
-            let worky = unsafe {
+            let _worky = unsafe {
                 VirtualQueryEx(
                     self.process.handl,
                     Some(addr as *const c_void),
@@ -162,7 +123,7 @@ impl<'a> ExModule<'a> {
                 break;
             }
 
-            let worky = unsafe {
+            let _worky = unsafe {
                 VirtualQueryEx(
                     self.process.handl,
                     Some(addr as *const c_void),
