@@ -7,7 +7,7 @@ use windows::{Win32::{
     },
 }};
 
-use crate::mem::{sigscan::SigScan, traits::Mem, utils::make_lpcstr};
+use crate::{sigscan::SigScan, traits::Mem, utils::make_lpcstr};
 
 use anyhow::{Result};
 use thiserror::Error;
@@ -34,8 +34,7 @@ impl InModule {
     /// * `name` - The name of the module to find.
     /// # Example
     /// ```
-    /// use poggers::mem::internal::process::Process;
-    /// use poggers::mem::internal::module::InModule;
+    /// use poggers::internal::windows::module::InModule;
     /// let module = InModule::new("user32.dll").unwrap();
     /// ```
     /// # Errors
@@ -70,8 +69,7 @@ impl InModule {
     /// * `name` - Name of the exported symbol.
     /// # Example
     /// ``` 
-    /// use poggers::mem::internal::process::Process;
-    /// use poggers::mem::internal::module::InModule;
+    /// use poggers::internal::windows::module::InModule;
     /// let module = InModule::new("ntdll.dll").unwrap();
     /// let nt_query_info = module.get_process_address("NtQuerySystemInformation").unwrap();
     /// ```
@@ -95,8 +93,7 @@ impl InModule {
     /// * `pattern` - The pattern to scan for (IDA Style).
     /// # Example
     /// ```
-    /// use poggers::mem::internal::process::Process;
-    /// use poggers::mem::internal::module::InModule;
+    /// use poggers::internal::windows::module::InModule;
     /// let module = InModule::new("user32.dll").unwrap();
     /// let address = module.scan_virtual("48 8B 05 ? ? ? ? 48 8B 88 ? ? ? ? 48 85 C9 74 0A").unwrap();
     /// ```
@@ -146,8 +143,7 @@ impl InModule {
     /// * `addr` - The address to find the relative distance.
     /// # Example
     /// ```
-    /// use poggers::mem::internal::process::Process;
-    /// use poggers::mem::internal::module::InModule;
+    /// use poggers::internal::windows::module::InModule;
     /// let module = InModule::new("ntdll.dll").unwrap();
     /// let relative = module.get_relative(0xDEADBEEF, 0x15);
     /// ```
@@ -162,10 +158,9 @@ impl InModule {
     /// * `offset` - Offset to add after address is solved.
     /// # Example
     /// ```
-    /// use poggers::mem::internal::process::Process;
-    /// use poggers::mem::internal::module::InModule;
+    /// use poggers::internal::windows::module::InModule;
     /// let module = InModule::new("ntdll.dll").unwrap();
-    /// let actual_location = module.resolve_relative_ptr(0xDEADBEEF, 0x15);
+    /// let actual_location = unsafe {module.resolve_relative_ptr(0xDEADBEEF, 0x15) };
     /// ```
     /// 
     pub unsafe fn resolve_relative_ptr(&self, addr: usize, offset: usize) -> Result<usize> {
@@ -202,7 +197,7 @@ impl Mem for InModule {
         (addr as *mut u8).copy_from_nonoverlapping(data, size);
         Ok(())
     }
-    unsafe fn alter_protection(&self, _addr:usize, _size: usize, _prot: crate::mem::structures::Protections) -> Result<crate::mem::structures::Protections> {
+    unsafe fn alter_protection(&self, _addr:usize, _size: usize, _prot: crate::structures::Protections) -> Result<crate::structures::Protections> {
         todo!() 
     }
 }
