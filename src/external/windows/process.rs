@@ -18,7 +18,8 @@ use windows::Win32::{
     },
 };
 
-use crate::mem::traits::Mem;
+use crate::structures::Protections;
+use crate::traits::Mem;
 
 use super::{module::ExModule, create_snapshot::{ToolSnapshot, STProcess}};
 
@@ -34,7 +35,7 @@ impl<'a> ExProcess {
     /// Creates a new [`ExProcess`] from a pid
     /// # Example
     /// ```
-    /// use mem::process::ExProcess;
+    /// use poggers::external::process::ExProcess;
     /// let proc = ExProcess::new(1234).unwrap();
     /// ```
     pub fn new_from_pid(pid: u32) -> Result<ExProcess> {
@@ -50,7 +51,7 @@ impl<'a> ExProcess {
     /// create a new [`ExProcess`] from a process name
     /// # Example
     /// ```
-    /// use mem::process::ExProcess;
+    /// use poggers::external::process::ExProcess;
     /// let process = ExProcess::new("csgo.exe").unwrap();
     /// ```
     pub fn new_from_name(name: String) -> Result<ExProcess> {
@@ -68,6 +69,12 @@ impl<'a> ExProcess {
         &self.handl
     }
     /// check that the process is still running
+    /// # Example
+    /// ```
+    /// use poggers::external::process::ExProcess;
+    /// let mut process = ExProcess::new_from_name("notepad.exe".to_string()).unwrap();
+    /// assert!(process.alive());
+    /// ```
     pub fn alive(&self) -> bool {
         let mut exit_code: u32 = 0;
         unsafe { GetExitCodeProcess(self.handl, &mut exit_code as *mut u32) }.as_bool()
@@ -115,8 +122,12 @@ impl<'a> ExProcess {
     /// * offsets - a vector of offsets
     /// # example
     /// ```
+    /// use poggers::external::process::ExProcess;
     /// let mut process = ExProcess::new_from_name("notepad.exe".to_string()).unwrap();
-    /// let addr = process.solve_dma(0x12345678, vec![0x0, 0x4, 0x8]).unwrap();
+    /// unsafe {
+    ///     let addrs: Vec<usize> = vec![0x0, 0x4, 0x8];
+    ///     let addr = process.solve_dma(0x12345678, &addrs).unwrap();
+    /// }
     /// ```
     pub unsafe fn solve_dma(&self, addr: usize, offsets: &Vec<usize>) -> Result<usize> {
         let mut ptr = addr;
@@ -131,7 +142,7 @@ impl<'a> ExProcess {
     /// * [Result]<[ExModule]> - The base module of the process
     /// # Example
     /// ```
-    /// use poggers::process::ExProcess;
+    /// use poggers::external::process::ExProcess;
     /// let mut process = ExProcess::new_from_name("notepad.exe".to_string()).unwrap();
     /// let base_module = process.get_base_module().unwrap();
     /// ```
@@ -150,6 +161,33 @@ impl<'a> ExProcess {
 }
 
 impl Mem for ExProcess {
+    unsafe fn alter_protection(
+        &self,
+        addr: usize,
+        size: usize,
+        prot: Protections,
+    ) -> Result<Protections> {
+        let mut old_protect = Default::default();
+        let res = unsafe {
+            VirtualProtectEx(
+                self.handl,
+                addr as *const c_void,
+                size,
+                prot.native(),
+                &mut old_protect,
+            )
+        };
+        if res.as_bool() {
+            Ok(old_protect.0.into())
+        } else {
+            match unsafe { GetLastError() } {
+                e => {
+                    println!("Error: {:?}", e);
+                }
+            }
+            Err(ProcessError::UnableToChangeProtection(addr as usize).into())
+        }
+    }
     unsafe fn raw_read(&self, addr: usize, data: *mut u8, size: usize) -> Result<()> {
         let res = ReadProcessMemory(
             self.handl,
@@ -177,33 +215,6 @@ impl Mem for ExProcess {
             Ok(())
         } else {
             Err(ProcessError::UnableToWriteMemory(addr as usize).into())
-        }
-    }
-    unsafe fn alter_protection(
-        &self,
-        addr: usize,
-        size: usize,
-        prot: crate::mem::structures::Protections,
-    ) -> Result<crate::mem::structures::Protections> {
-        let mut old_protect = Default::default();
-        let res = unsafe {
-            VirtualProtectEx(
-                self.handl,
-                addr as *const c_void,
-                size,
-                prot.native(),
-                &mut old_protect,
-            )
-        };
-        if res.as_bool() {
-            Ok(old_protect.0.into())
-        } else {
-            match unsafe { GetLastError() } {
-                e => {
-                    println!("Error: {:?}", e);
-                }
-            }
-            Err(ProcessError::UnableToChangeProtection(addr as usize).into())
         }
     }
 }

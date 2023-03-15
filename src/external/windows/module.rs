@@ -7,12 +7,12 @@ use windows::Win32::{
     },
 };
 
-use crate::mem::sigscan::SigScan;
-
 use super::process::ExProcess;
 use anyhow::{Result};
 use thiserror::Error;
-use crate::mem::traits::Mem;
+use crate::sigscan::SigScan;
+use crate::structures::Protections;
+use crate::traits::Mem;
 
 /// A module in a process.
 #[derive(Debug)]
@@ -38,8 +38,8 @@ impl<'a> ExModule<'a> {
     /// * `process` - The process to find the module in.
     /// # Example
     /// ```
-    /// use poggers::mem::process::ExProcess;
-    /// use poggers::mem::module::ExModule;
+    /// use poggers::external::module::ExModule;
+    /// use poggers::external::process::ExProcess;
     /// let process = ExProcess::new("notepad.exe").unwrap();
     /// let module = ExModule::new("user32.dll", &process).unwrap();
     /// ```
@@ -67,8 +67,8 @@ impl<'a> ExModule<'a> {
     /// * `pattern` - The pattern to scan for (IDA Style).
     /// # Example
     /// ```
-    /// use poggers::mem::process::ExProcess;
-    /// use poggers::mem::module::ExModule;
+    /// use poggers::external::module::ExModule;
+    /// use poggers::external::process::ExProcess;
     /// let process = ExProcess::new("notepad.exe").unwrap();
     /// let module = ExModule::new("user32.dll", &process).unwrap();
     /// let address = module.pattern_scan("48 8B 05 ? ? ? ? 48 8B 88 ? ? ? ? 48 85 C9 74 0A").unwrap();
@@ -154,14 +154,7 @@ impl<'a> ExModule<'a> {
     /// # Arguments
     /// * `addr` - The address to find the relative distance.
     /// * `offset` - Offset to add after address is solved.
-    /// # Example
-    /// ```
-    /// use poggers::mem::internal::process::Process;
-    /// use poggers::mem::internal::module::InModule;
-    /// let module = InModule::new("ntdll.dll").unwrap();
-    /// let relative = module.get_relative(0xDEADBEEF, 0x15);
-    /// ```
-    /// 
+    ///
     pub fn get_relative(&self, addr: usize,offset:usize) -> usize {
         (addr - self.base_address) + offset
     }
@@ -170,14 +163,7 @@ impl<'a> ExModule<'a> {
     /// # Arguments
     /// * `addr` - Address to run function with.
     /// * `offset` - Offset to add after address is solved.
-    /// # Example
-    /// ```
-    /// use poggers::mem::internal::process::Process;
-    /// use poggers::mem::internal::module::InModule;
-    /// let module = InModule::new("ntdll.dll").unwrap();
-    /// let actual_location = module.resolve_relative_ptr(0xDEADBEEF, 0x15);
-    /// ```
-    /// 
+    ///
     pub unsafe fn resolve_relative_ptr(&self, addr: usize, offset: usize) -> Result<usize> {
         let real_offset = self.read::<u32>(addr)?;
         println!("Real offset: {:X?}", real_offset);
@@ -202,8 +188,7 @@ pub enum ModuleError {
 impl<'a> SigScan for ExModule<'a> {}
 
 impl<'a> Mem for ExModule<'a> {
-    const READ_REQUIRE_PROTECTION: bool = true;
-    unsafe fn alter_protection(&self,addr:usize, size: usize, prot: crate::mem::structures::Protections) -> Result<crate::mem::structures::Protections> {
+    unsafe fn alter_protection(&self, addr:usize, size: usize, prot: Protections) -> Result<Protections> {
         self.process.alter_protection(addr, size, prot)
     }
     unsafe fn raw_read(&self, addr: usize,data: *mut u8, size: usize) -> Result<()> {

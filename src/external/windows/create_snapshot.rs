@@ -66,12 +66,11 @@ impl Iterator for ToolSnapshot<STModule> {
         fn next(&mut self) -> Option<Self::Item> {
             let mut lpme: MODULEENTRY32 = Default::default();
             lpme.dwSize = std::mem::size_of::<MODULEENTRY32>() as u32;
-            if !self.first_complete {
+            return if !self.first_complete {
                 unsafe {
-                    
                     if Module32First(self.handle, &mut lpme).as_bool() {
                         self.first_complete = true;
-                        return Some(STModule {
+                        Some(STModule {
                             process_id: lpme.th32ProcessID,
                             base_address: lpme.modBaseAddr as usize,
                             size: lpme.modBaseSize as usize,
@@ -80,13 +79,13 @@ impl Iterator for ToolSnapshot<STModule> {
                             handle: lpme.hModule
                         })
                     } else {
-                        return None
+                        None
                     }
                 }
             } else {
                 unsafe {
                     if Module32Next(self.handle, &mut lpme).as_bool() {
-                        return Some(STModule {
+                        Some(STModule {
                             process_id: lpme.th32ProcessID,
                             base_address: lpme.modBaseAddr as usize,
                             size: lpme.modBaseSize as usize,
@@ -95,7 +94,7 @@ impl Iterator for ToolSnapshot<STModule> {
                             handle: lpme.hModule
                         })
                     } else {
-                        return None
+                        None
                     }
                 }
             }
@@ -119,33 +118,31 @@ impl Iterator for ToolSnapshot<STProcess> {
     fn next(&mut self) -> Option<Self::Item> {
         let mut lppe: PROCESSENTRY32 = Default::default();
         lppe.dwSize = std::mem::size_of::<PROCESSENTRY32>() as u32;
-        if !self.first_complete {
+        return if !self.first_complete {
             unsafe {
-                
                 if Process32First(self.handle, &mut lppe).as_bool() {
                     self.first_complete = true;
-                    return Some(STProcess {
+                    Some(STProcess {
                         id: lppe.th32ProcessID,
                         thread_count: lppe.cntThreads,
                         parent_id: lppe.th32ParentProcessID,
                         exe_path: CStr::from_bytes_until_nul(lppe.szExeFile.as_slice()).unwrap().to_string_lossy().to_string()
                     })
                 } else {
-                    return None
+                    None
                 }
             }
         } else {
             unsafe {
                 if Process32Next(self.handle, &mut lppe).as_bool() {
-                    return Some(STProcess {
+                    Some(STProcess {
                         id: lppe.th32ProcessID,
                         thread_count: lppe.cntThreads,
                         parent_id: lppe.th32ParentProcessID,
                         exe_path: CStr::from_bytes_until_nul(lppe.szExeFile.as_slice()).unwrap().to_string_lossy().to_string()
-
                     })
                 } else {
-                    return None
+                    None
                 }
             }
         }

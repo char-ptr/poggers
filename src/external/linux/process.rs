@@ -94,8 +94,12 @@ impl Mem for ExProcess {
             _ => Err(anyhow!("UNKNOWN ERROR")),
         }
     }
-    unsafe fn alter_protection(&self,addr:usize, size: usize, prot: crate::mem::structures::Protections) -> Result<crate::mem::structures::Protections> {
+    unsafe fn alter_protection(&self, addr:usize, size: usize, prot: crate::mem::structures::Protections) -> Result<crate::mem::structures::Protections> {
         Ok(prot)
     }
 }
 impl SigScan for ExProcess {}
+#[derive(Error)]
+pub enum ProcessErrors {
+
+}

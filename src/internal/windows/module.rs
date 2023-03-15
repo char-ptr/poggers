@@ -202,7 +202,7 @@ impl Mem for InModule {
         (addr as *mut u8).copy_from_nonoverlapping(data, size);
         Ok(())
     }
-    unsafe fn alter_protection(&self,_addr:usize, _size: usize, _prot: crate::mem::structures::Protections) -> Result<crate::mem::structures::Protections> {
+    unsafe fn alter_protection(&self, _addr:usize, _size: usize, _prot: crate::mem::structures::Protections) -> Result<crate::mem::structures::Protections> {
         todo!() 
     }
 }
