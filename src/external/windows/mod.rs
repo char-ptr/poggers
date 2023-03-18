@@ -12,7 +12,7 @@ mod tests {
         process::{Command, Stdio},
     };
     
-    use crate::mem::traits::Mem;
+    use crate::traits::Mem;
     use super::process::*;
     
     #[test]

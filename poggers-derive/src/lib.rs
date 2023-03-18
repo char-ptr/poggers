@@ -7,21 +7,30 @@ use syn::{parse_macro_input, ItemFn, Ident, parse::Parse, punctuated::Punctuated
 
 
 struct CreateEntryArguments {
-    no_console: bool
+    no_console: bool,
+    no_thread: bool,
 }
 
 impl Parse for CreateEntryArguments {
     fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
         let argss = Punctuated::<Ident, Token![,]>::parse_terminated(input)?;
+        let mut no_console = false;
+        let mut no_thread = false;
         for arg in argss {
-            if arg == "no_console" {
-                return Ok(CreateEntryArguments {
-                    no_console: true
-                });
+            match arg.to_string().as_str() {
+                "no_console" => {
+                    no_console = true;
+                }
+                "no_thread" => {
+                    no_thread = true;
+                }
+                _ => {}
+                
             }
         }
         return Ok(CreateEntryArguments {
-            no_console: false
+            no_console,
+            no_thread,
         });
     }
 }
@@ -86,6 +95,15 @@ pub fn create_entry(attr:TokenStream, item:TokenStream) -> TokenStream {
             Ok(r) => {#handle_ret},
         };
     };
+
+    let thread_spawn = if arg.no_thread {quote!{#alloc_console;#cross_platform;#free_console}} else {quote!{
+        std::thread::spawn(|| {
+            #alloc_console
+            #cross_platform
+            #free_console
+        });
+    }};
+
     #[cfg(target_os = "windows")]
     let generated = quote!{
         #[no_mangle]
@@ -96,12 +114,7 @@ pub fn create_entry(attr:TokenStream, item:TokenStream) -> TokenStream {
         ) -> #curr_crate::exports::BOOL {
             match reason {
                 #curr_crate::exports::DLL_PROCESS_ATTACH => {
-                    std::thread::spawn(|| {
-                        #alloc_console
-                        #cross_platform
-
-                        #free_console
-                    });
+                    #thread_spawn
                     (true).into()
                 }
                 _ => (false).into()

@@ -56,7 +56,7 @@ checksum = "86f0b0d4bf799edbc74508c1e8bf170ff5f41238e5f8225603ca7caaae2b7860"
 
 [[package]]
 name = "poggers"
-version = "0.3.3"
+version = "0.4.0"
 dependencies = [
  "anyhow",
  "ctor",
@@ -64,6 +64,7 @@ dependencies = [
  "log",
  "mach",
  "thiserror",
+ "widestring",
  "windows",
 ]
 
@@ -157,6 +158,12 @@ name = "unicode-ident"
 version = "1.0.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "84a22b9f218b40614adcb3f4ff08b703773ad44fa9423e4e0d346d5db86e4ebc"
+
+[[package]]
+name = "widestring"
+version = "1.0.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "653f141f39ec16bba3c5abe400a0c60da7468261cc2cbf36805022876bc721a8"
 
 [[package]]
 name = "windows"

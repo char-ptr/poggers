@@ -3,9 +3,9 @@ use std::{os::raw::c_void};
 use windows::{Win32::{
     Foundation::{HINSTANCE},
     System::{
-        Memory::{MEMORY_BASIC_INFORMATION, MEM_COMMIT, PAGE_NOACCESS, VirtualQuery}, LibraryLoader::{GetModuleHandleA, GetProcAddress}, ProcessStatus::{K32GetModuleInformation, MODULEINFO}, Threading::GetCurrentProcess,
+        Memory::{MEMORY_BASIC_INFORMATION, MEM_COMMIT, PAGE_NOACCESS, VirtualQuery}, LibraryLoader::{GetModuleHandleA, GetProcAddress, GetModuleHandleW}, ProcessStatus::{K32GetModuleInformation, MODULEINFO}, Threading::GetCurrentProcess,
     },
-}};
+}, core::PCWSTR};
 
 use crate::{sigscan::SigScan, traits::Mem, utils::make_lpcstr};
 
@@ -42,9 +42,9 @@ impl InModule {
     /// * [`ModuleError::UnableToOpenHandle`] - The module handle could not be retrieved.
     pub fn new(name: &str) -> Result<Self> {
 
-        let lpc_str = make_lpcstr(name);
+        let wstr = widestring::U16CString::from_str(name).unwrap();
 
-        let module = unsafe {GetModuleHandleA(lpc_str)}.or(Err(InModuleError::NoModuleFound(name.to_string())))?;
+        let module = unsafe {GetModuleHandleW(PCWSTR::from_raw(wstr.as_ptr()))}.or(Err(InModuleError::NoModuleFound(name.to_string())))?;
 
         let mut mod_info : MODULEINFO = Default::default();
 
@@ -189,6 +189,9 @@ pub enum InModuleError {
 }
 
 impl Mem for InModule {
+    unsafe fn alter_protection(&self, _addr:usize, _size: usize, _prot: crate::structures::Protections) -> Result<crate::structures::Protections> {
+        todo!()
+    }
     unsafe fn raw_read(&self, addr: usize,data: *mut u8, size: usize) -> Result<()> {
         (addr as *mut u8).copy_to_nonoverlapping(data, size);
         Ok(())
@@ -196,9 +199,6 @@ impl Mem for InModule {
     unsafe fn raw_write(&self, addr: usize,data: *const u8, size: usize) -> Result<()> {
         (addr as *mut u8).copy_from_nonoverlapping(data, size);
         Ok(())
-    }
-    unsafe fn alter_protection(&self, _addr:usize, _size: usize, _prot: crate::structures::Protections) -> Result<crate::structures::Protections> {
-        todo!() 
     }
 }
 impl SigScan for InModule {}
