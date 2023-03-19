@@ -1,13 +1,13 @@
-use std::{os::raw::c_void};
+use std::{os::raw::c_void, ffi::CString};
 
 use windows::{Win32::{
     Foundation::{HINSTANCE},
     System::{
-        Memory::{MEMORY_BASIC_INFORMATION, MEM_COMMIT, PAGE_NOACCESS, VirtualQuery}, LibraryLoader::{GetModuleHandleA, GetProcAddress, GetModuleHandleW}, ProcessStatus::{K32GetModuleInformation, MODULEINFO}, Threading::GetCurrentProcess,
+        Memory::{MEMORY_BASIC_INFORMATION, MEM_COMMIT, PAGE_NOACCESS, VirtualQuery}, LibraryLoader::{GetProcAddress, GetModuleHandleW}, ProcessStatus::{K32GetModuleInformation, MODULEINFO}, Threading::GetCurrentProcess,
     },
-}, core::PCWSTR};
+}, core::{PCWSTR, PCSTR}};
 
-use crate::{sigscan::SigScan, traits::Mem, utils::make_lpcstr};
+use crate::{sigscan::SigScan, traits::Mem};
 
 use anyhow::{Result};
 use thiserror::Error;
@@ -75,9 +75,9 @@ impl InModule {
     /// ```
     /// 
     pub fn get_process_address<T>(&self, name: &str) -> Option<T> {
-        let lpc_name = make_lpcstr(name);
+        let wname = CString::new(name).unwrap();
 
-        let result = unsafe { GetProcAddress(self.handle, lpc_name) };
+        let result = unsafe { GetProcAddress(self.handle, PCSTR::from_raw(wname.as_ptr() as *const u8)) };
         result.map(|proc| unsafe { std::mem::transmute_copy(&proc) })
 
         // match unsafe { GetProcAddress(self.handle, lpc_name) } {

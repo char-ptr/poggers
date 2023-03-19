@@ -50,5 +50,3 @@ pub mod external;
 pub mod internal;
 /// Structures which may be used cross platform.
 pub mod structures;
-/// Utilities which may be used cross platform.
-pub mod utils;
