@@ -5,6 +5,7 @@ use thiserror::Error;
 use windows::Win32::{System::Diagnostics::ToolHelp::{Process32First, TH32CS_SNAPPROCESS, Module32First, MODULEENTRY32, CreateToolhelp32Snapshot, TH32CS_SNAPMODULE, TH32CS_SNAPMODULE32, Module32Next, PROCESSENTRY32, Process32Next}, Foundation::{HANDLE, HINSTANCE, CloseHandle}};
 
 /// Represents a process from ToolSnapshotHelper
+#[derive(Debug,Clone)]
 pub struct STProcess {
     /// the process id
     pub id : u32,
@@ -15,6 +16,12 @@ pub struct STProcess {
     /// the name to the executable
     pub exe_path : String
 }
+impl PartialEq for STProcess {
+    fn eq(&self, other: &Self) -> bool {
+        self.id == other.id
+    }
+}
+
 // struct STThread;
 /// Represents a module from ToolSnapshotHelper
 pub struct STModule {

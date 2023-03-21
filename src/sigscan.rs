@@ -53,8 +53,9 @@ pub trait SigScan: Mem {
     /// * `page` - The page to scan.
     /// # Returns
     /// * [Option<usize>] - The address which has been found.
-    fn scan_batch(&self, pattern: &str, page: &Vec<u8>) -> Option<usize> {
+    fn scan_batch(&self, pattern: &str, page: &[u8]) -> Option<usize> {
         for i in 0..page.len() {
+
             let mut okay = true;
             let mut offset = 0;
             let mut skip_next = false;
@@ -70,9 +71,14 @@ pub trait SigScan: Mem {
                     skip_next = false;
                     continue;
                 }
-                let byte = page[i + offset];
+                let byte = page.get(i + offset);
+                if byte.is_none() {
+                    okay = false;
+                    break;
+                }
+                let byte = byte.unwrap();
                 let byte2 = u8::from_str_radix(&pattern[ci..ci + 2].to_string(), 16).unwrap();
-                if byte != byte2 {
+                if *byte != byte2 {
                     okay = false;
                     break;
                 }
@@ -86,7 +92,7 @@ pub trait SigScan: Mem {
         None
     }
     /// scan for a value of <T>
-    fn scan_batch_value<T : Sized>(&self, val: &T, page: &Vec<u8>) -> Option<usize> {
+    fn scan_batch_value<T : Sized>(&self, val: &T, page: &[u8]) -> Option<usize> {
         let type_size = std::mem::size_of::<T>();
         let mut val_arr = vec![0; type_size];
         unsafe {(val as *const T as *const u8).copy_to_nonoverlapping(val_arr.as_mut_ptr(), type_size) };

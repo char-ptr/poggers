@@ -16,6 +16,9 @@ targets = ["x86_64-pc-windows-msvc","x86_64-unknown-linux-gnu"]
 [workspace]
 members = ["poggers-derive"]
 
+[profile.debuga]
+inherits = "release"
+debug = true
 [dependencies]
 anyhow = "1.0.68"
 thiserror = "1.0.38"

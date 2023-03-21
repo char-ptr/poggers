@@ -97,9 +97,9 @@ impl<'a> ExModule<'a> {
                 addr += mem_info.RegionSize as usize;
                 continue;
             }
-
-            let page = self
-                .read_sized(addr, mem_info.RegionSize - 1)
+            let mut page = [0u8; 0x4096];
+            self
+                .raw_read(addr, &mut page as *mut u8, 0x4096)
                 .ok()?;
             let scan_res = self.scan_batch(pattern, &page);
 
@@ -107,7 +107,7 @@ impl<'a> ExModule<'a> {
                 println!("Found pattern at {:#x}", scan_res.unwrap());
                 return Some(addr + result);
             }
-            addr += mem_info.RegionSize as usize;
+            addr += 0x4096 as usize;
         }
         None
     }

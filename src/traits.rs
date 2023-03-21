@@ -34,8 +34,7 @@ pub trait Mem {
         //     self.alter_protection(addr, size, old)?;
         // }
         Ok(data)
-    }
-    /// Write <T> to memory at address <addr>
+    }    /// Write <T> to memory at address <addr>
     unsafe fn write<T>(&self, addr: usize, data: &T) -> Result<()> {
         // if Self::WRITE_REQUIRE_PROTECTION {
         //     let old = self.alter_protection(addr, std::mem::size_of::<T>(),Protections::ReadWrite)?;

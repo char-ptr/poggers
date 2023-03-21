@@ -32,6 +32,11 @@ pub struct ExProcess {
 }
 
 impl<'a> ExProcess {
+    /// returns the current process id for the process
+    pub fn get_pid(&self) -> u32 {
+        self.pid
+    }
+
     /// Creates a new [`ExProcess`] from a pid
     /// # Example
     /// ```
