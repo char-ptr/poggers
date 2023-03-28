@@ -14,7 +14,7 @@ targets = ["x86_64-pc-windows-msvc","x86_64-unknown-linux-gnu"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [workspace]
-members = ["poggers-derive"]
+members = ["poggers-derive","rw-test"]
 
 [profile.debuga]
 inherits = "release"

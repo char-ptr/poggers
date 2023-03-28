@@ -108,6 +108,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "rw-test"
+version = "0.1.0"
+
+[[package]]
 name = "serde"
 version = "1.0.152"
 source = "registry+https://github.com/rust-lang/crates.io-index"
