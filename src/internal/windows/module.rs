@@ -125,7 +125,7 @@ impl InModule {
             let page = super::super::utils::read_sized(addr, mem_info.RegionSize - 1)
                 .ok()?;
 
-            let scan_res = self.scan_batch(pattern, &page);
+            let scan_res = self.scan(pattern, (&page).iter());
 
             if let Some(result) = scan_res {
                 println!("Found pattern at {:#x}", scan_res.unwrap());
