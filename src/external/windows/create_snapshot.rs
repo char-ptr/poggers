@@ -2,7 +2,7 @@ use std::{ffi::{CStr}, marker::PhantomData};
 
 use anyhow::Result;
 use thiserror::Error;
-use windows::Win32::{System::Diagnostics::ToolHelp::{Process32First, TH32CS_SNAPPROCESS, Module32First, MODULEENTRY32, CreateToolhelp32Snapshot, TH32CS_SNAPMODULE, TH32CS_SNAPMODULE32, Module32Next, PROCESSENTRY32, Process32Next}, Foundation::{HANDLE, HINSTANCE, CloseHandle}};
+use windows::Win32::{System::Diagnostics::ToolHelp::{Process32First, TH32CS_SNAPPROCESS, Module32First, MODULEENTRY32, CreateToolhelp32Snapshot, TH32CS_SNAPMODULE, TH32CS_SNAPMODULE32, Module32Next, PROCESSENTRY32, Process32Next}, Foundation::{HANDLE, CloseHandle, HMODULE}};
 
 /// Represents a process from ToolSnapshotHelper
 #[derive(Debug,Clone)]
@@ -36,7 +36,7 @@ pub struct STModule {
     /// the file name of the module
     pub exe_path : String,
     /// a handle to the module <DO NOT DISPOSE OF>
-    pub handle : HINSTANCE 
+    pub handle : HMODULE 
 }
 /// used to provide which type of snapshot to create
 pub struct NoTypeSel; 

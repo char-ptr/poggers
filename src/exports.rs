@@ -2,12 +2,13 @@
 #[cfg(windows)]
 pub use windows::{
     Win32::{
-        Foundation::{HANDLE,HINSTANCE,BOOL},
+        Foundation::{HANDLE,BOOL},
         System::{
             SystemServices::DLL_PROCESS_ATTACH,
             Console::{AllocConsole,FreeConsole},
         }
     }
 };
+
 #[cfg(not(target_os = "windows"))]
 pub use ctor::ctor;

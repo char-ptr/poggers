@@ -11,7 +11,7 @@ use windows::Win32::{
         Memory::{
             VirtualProtectEx,
         },
-        ProcessStatus::K32GetModuleFileNameExW,
+        ProcessStatus::GetModuleFileNameExW,
         Threading::{
             GetExitCodeProcess, OpenProcess, TerminateProcess, PROCESS_ALL_ACCESS,
         },
@@ -99,7 +99,7 @@ impl<'a> ExProcess {
             return Err(ProcessError::InvalidPid(process_id).into());
         }
         let mut buffer = [0u16; MAX_PATH as usize];
-        unsafe { K32GetModuleFileNameExW(hndl.clone(), None, &mut buffer) };
+        unsafe { GetModuleFileNameExW(hndl.clone(), None, &mut buffer) };
         // println!("{:?}", buffer);
         Ok(String::from_utf16_lossy(&buffer)
             .rsplit("\\")
