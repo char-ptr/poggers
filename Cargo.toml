@@ -16,6 +16,8 @@ targets = ["x86_64-pc-windows-msvc","x86_64-unknown-linux-gnu"]
 [workspace]
 members = ["poggers-derive","rw-test"]
 
+[profile.release]
+lto=true
 [profile.debuga]
 inherits = "release"
 debug = true
@@ -25,7 +27,7 @@ thiserror = "1.0.38"
 log = "0.4.17"
 widestring = "1.0.2"
 [target.'cfg(target_os="windows")'.dependencies]
-windows = {version = "0.47.0",features = [
+windows = {version = "0.46.0",features = [
     "Win32_System_Threading","Win32_Foundation","Win32_System_LibraryLoader",
     "Win32_System_Diagnostics_ToolHelp", "Win32_System_Diagnostics_Debug",
     "Win32_System_Memory", "Win32_System_ProcessStatus", "Win32_System_Console",

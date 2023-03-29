@@ -3,7 +3,7 @@ use std::{os::raw::c_void};
 use windows::Win32::{
     System::{
         Memory::{VirtualQueryEx, MEMORY_BASIC_INFORMATION, MEM_COMMIT, PAGE_NOACCESS},
-    }, Foundation::HMODULE,
+    }, Foundation::HINSTANCE,
 };
 
 use super::process::ExProcess;
@@ -23,12 +23,12 @@ pub struct ExModule<'a> {
     pub size: usize,
     /// The name of the module.
     pub name: String,
-    pub(crate) handle: HMODULE,
+    pub(crate) handle: HINSTANCE,
 }
 
 impl<'a> ExModule<'a> {
     /// gets the module handle
-    pub fn get_handle(&self) -> &HMODULE {
+    pub fn get_handle(&self) -> &HINSTANCE {
         &self.handle
     }
     /// create a new module object from a process and a module name.
