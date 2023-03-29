@@ -1,10 +1,9 @@
 use std::{os::raw::c_void};
 
 use windows::Win32::{
-    Foundation::{HINSTANCE},
     System::{
         Memory::{VirtualQueryEx, MEMORY_BASIC_INFORMATION, MEM_COMMIT, PAGE_NOACCESS},
-    },
+    }, Foundation::HMODULE,
 };
 
 use super::process::ExProcess;
@@ -24,12 +23,12 @@ pub struct ExModule<'a> {
     pub size: usize,
     /// The name of the module.
     pub name: String,
-    pub(crate) handle: HINSTANCE,
+    pub(crate) handle: HMODULE,
 }
 
 impl<'a> ExModule<'a> {
     /// gets the module handle
-    pub fn get_handle(&self) -> &HINSTANCE {
+    pub fn get_handle(&self) -> &HMODULE {
         &self.handle
     }
     /// create a new module object from a process and a module name.
@@ -101,7 +100,7 @@ impl<'a> ExModule<'a> {
             self
                 .raw_read(addr, &mut page as *mut u8, 0x4096)
                 .ok()?;
-            let scan_res = self.scan_batch(pattern, &page);
+            let scan_res = self.scan(pattern, (&page).iter());
 
             if let Some(result) = scan_res {
                 println!("Found pattern at {:#x}", scan_res.unwrap());

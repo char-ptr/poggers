@@ -6,6 +6,7 @@ use super::traits::Mem;
 /// * [`Self::scan`] will read for each byte in the size
 /// * [`Self::scan_batch`] will take a vector of a page and will not make additional read calls (better for external.)
 pub trait SigScan: Mem {
+
     /// Scans for a pattern in the process.
     /// # Arguments
     /// * `pattern` - The pattern to scan for.
@@ -13,7 +14,56 @@ pub trait SigScan: Mem {
     /// * `size` - The size of the region to scan.
     /// # Returns
     /// * [Option<usize>] - The address which has been found.
-    unsafe fn scan(&self, pattern: &str, from: usize, size: usize) -> Option<usize> {
+    fn scan<'a>(&self, pattern:&str, iter : impl Iterator<Item = &'a u8>) ->  Option<usize> {
+
+        let mut compiled_pattern : Vec<u8> = Vec::with_capacity(pattern.len());
+        let mut skip = false;
+        for (i,char) in pattern.chars().enumerate() {
+            if skip {
+                skip = false;
+                continue;
+            }
+            match char {
+                '?' => compiled_pattern.push(b'?'),
+                ' ' => continue,
+                _ => {
+                    let charpt = &pattern[i..i+2];
+                    let byte = u8::from_str_radix(charpt, 16).unwrap();
+                    compiled_pattern.push(byte);
+                    skip = true;
+                }
+            }
+        }
+        let mut pi = 0;
+        let pl = compiled_pattern.len();
+        for (i,data) in iter.enumerate() {
+            match compiled_pattern[pi] {
+                b'?' => {
+                    pi += 1;
+                    continue;
+                }
+                _ => {}
+            }
+            if *data == compiled_pattern[pi] {
+                if pi == pl - 1 {
+                    return Some(i - pl + 1);
+                }
+                pi += 1;
+            } else {
+                pi = 0;
+            }
+        }
+        None
+    }
+
+    /// Scans for a pattern in the process.
+    /// # Arguments
+    /// * `pattern` - The pattern to scan for.
+    /// * `from` - The address to start scanning from.
+    /// * `size` - The size of the region to scan.
+    /// # Returns
+    /// * [Option<usize>] - The address which has been found.
+    unsafe fn oscan(&self, pattern: &str, from: usize, size: usize) -> Option<usize> {
         for i in 0..size {
             let mut okay = true;
             let mut offset = 0;
