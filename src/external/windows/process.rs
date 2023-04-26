@@ -99,10 +99,10 @@ impl<'a> ExProcess {
             return Err(ProcessError::InvalidPid(process_id).into());
         }
         let mut buffer = [0u16; MAX_PATH as usize];
-        unsafe { K32GetModuleFileNameExW(hndl.clone(), None, &mut buffer) };
+        unsafe { K32GetModuleFileNameExW(*hndl, None, &mut buffer) };
         // println!("{:?}", buffer);
         Ok(String::from_utf16_lossy(&buffer)
-            .rsplit("\\")
+            .rsplit('\\')
             .next()
             .unwrap()
             .trim_matches('\x00')
@@ -134,6 +134,8 @@ impl<'a> ExProcess {
     ///     let addr = process.solve_dma(0x12345678, &addrs).unwrap();
     /// }
     /// ```
+    /// # Safety
+    /// safe to use if address is valid and offsets don't go down into a null pointer
     pub unsafe fn solve_dma(&self, addr: usize, offsets: &Vec<usize>) -> Result<usize> {
         let mut ptr = addr;
         for offset in offsets {
@@ -185,12 +187,13 @@ impl Mem for ExProcess {
         if res.as_bool() {
             Ok(old_protect.0.into())
         } else {
+            // plan to match in the future, cba atm
             match unsafe { GetLastError() } {
                 e => {
                     println!("Error: {:?}", e);
                 }
             }
-            Err(ProcessError::UnableToChangeProtection(addr as usize).into())
+            Err(ProcessError::UnableToChangeProtection(addr).into())
         }
     }
     unsafe fn raw_read(&self, addr: usize, data: *mut u8, size: usize) -> Result<()> {
@@ -205,7 +208,7 @@ impl Mem for ExProcess {
         if res.as_bool() {
             Ok(())
         } else {
-            Err(ProcessError::UnableToReadMemory(addr as usize).into())
+            Err(ProcessError::UnableToReadMemory(addr).into())
         }
     }
     unsafe fn raw_write(&self, addr: usize, data: *const u8, size: usize) -> Result<()> {
@@ -219,7 +222,7 @@ impl Mem for ExProcess {
         if res.as_bool() {
             Ok(())
         } else {
-            Err(ProcessError::UnableToWriteMemory(addr as usize).into())
+            Err(ProcessError::UnableToWriteMemory(addr).into())
         }
     }
 }
@@ -270,8 +273,8 @@ impl Drop for ExProcess {
         }
     }
 }
-impl Into<ExProcess> for STProcess {
-    fn into(self) -> ExProcess {
-        ExProcess::new_from_pid(self.id).unwrap()
+impl From<STProcess> for ExProcess {
+    fn from(val: STProcess) -> Self {
+        ExProcess::new_from_pid(val.id).unwrap()
     }
 }

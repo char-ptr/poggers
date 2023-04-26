@@ -71,8 +71,10 @@ impl Iterator for ToolSnapshot<STModule> {
     
         type Item = STModule;
         fn next(&mut self) -> Option<Self::Item> {
-            let mut lpme: MODULEENTRY32 = Default::default();
-            lpme.dwSize = std::mem::size_of::<MODULEENTRY32>() as u32;
+            let mut lpme = MODULEENTRY32 {
+                dwSize: std::mem::size_of::<MODULEENTRY32>() as u32,
+                ..Default::default()
+            };
             return if !self.first_complete {
                 unsafe {
                     if Module32First(self.handle, &mut lpme).as_bool() {
@@ -123,8 +125,10 @@ impl Iterator for ToolSnapshot<STProcess> {
 
     type Item = STProcess;
     fn next(&mut self) -> Option<Self::Item> {
-        let mut lppe: PROCESSENTRY32 = Default::default();
-        lppe.dwSize = std::mem::size_of::<PROCESSENTRY32>() as u32;
+        let mut lppe = PROCESSENTRY32 {
+            dwSize: std::mem::size_of::<MODULEENTRY32>() as u32,
+            ..Default::default()
+        };
         return if !self.first_complete {
             unsafe {
                 if Process32First(self.handle, &mut lppe).as_bool() {

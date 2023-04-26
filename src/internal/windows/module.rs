@@ -98,8 +98,10 @@ impl InModule {
     /// ```
     /// 
     pub fn scan_virtual(&self, pattern: &str) -> Option<usize> {
-        let mut mem_info: MEMORY_BASIC_INFORMATION = Default::default();
-        mem_info.RegionSize = 0x4096;
+        let mut mem_info = MEMORY_BASIC_INFORMATION {
+            RegionSize: 0x4096,
+            ..Default::default()
+        };
 
         println!("{} -> {}", self.base_address, self.size);
 
@@ -118,20 +120,20 @@ impl InModule {
                 )
             };
             if mem_info.State != MEM_COMMIT || mem_info.Protect == PAGE_NOACCESS {
-                addr += mem_info.RegionSize as usize;
+                addr += mem_info.RegionSize;
                 continue;
             }
 
             let page = super::super::utils::read_sized(addr, mem_info.RegionSize - 1)
                 .ok()?;
 
-            let scan_res = self.scan(pattern, (&page).iter());
+            let scan_res = self.scan(pattern, page.iter());
 
             if let Some(result) = scan_res {
                 println!("Found pattern at {:#x}", scan_res.unwrap());
                 return Some(addr + result);
             }
-            addr += mem_info.RegionSize as usize;
+            addr += mem_info.RegionSize;
         }
         None
     }
@@ -161,7 +163,8 @@ impl InModule {
     /// let module = InModule::new("ntdll.dll").unwrap();
     /// let actual_location = unsafe {module.resolve_relative_ptr(0xDEADBEEF, 0x15) };
     /// ```
-    /// 
+    /// # Safety
+    /// this is fine as long as address and offset lead to a valid address
     pub unsafe fn resolve_relative_ptr(&self, addr: usize, offset: usize) -> Result<usize> {
         let real_offset = self.read::<u32>(addr)?;
         println!("Real offset: {:X?}", real_offset);

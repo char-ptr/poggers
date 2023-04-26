@@ -66,9 +66,9 @@ impl From<u32> for Protections {
     }
 }
 #[cfg(windows)]
-impl Into<u32> for Protections {
-    fn into(self) -> u32 {
-        self.u32()
+impl From<Protections> for u32 {
+    fn from(val: Protections) -> Self {
+        val.u32()
     }
 }
 

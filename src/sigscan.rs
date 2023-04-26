@@ -37,12 +37,9 @@ pub trait SigScan: Mem {
         let mut pi = 0;
         let pl = compiled_pattern.len();
         for (i,data) in iter.enumerate() {
-            match compiled_pattern[pi] {
-                b'?' => {
-                    pi += 1;
-                    continue;
-                }
-                _ => {}
+            if let b'?' = compiled_pattern[pi] {
+                pi += 1;
+                continue;
             }
             if *data == compiled_pattern[pi] {
                 if pi == pl - 1 {
@@ -55,6 +52,7 @@ pub trait SigScan: Mem {
         }
         None
     }
+    /// scans for a value in a page
     fn scan_batch_value<T : Sized>(&self, val: &T, page: &[u8]) -> Option<usize> {
         let type_size = std::mem::size_of::<T>();
         let mut val_arr = vec![0; type_size];

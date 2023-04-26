@@ -1,13 +1,13 @@
-use std::{time::Duration, mem::transmute};
+use std::{time::Duration};
 
 
-static mut stat_val : i32 = 0x7116491; 
+static mut STAT_VAL : i32 = 0x7116491; 
 
 fn main() {
     unsafe {
-        println!("{:p}",&stat_val as *const i32);
+        println!("{:p}",&STAT_VAL as *const i32);
         loop {
-            println!("{}",&stat_val);
+            println!("{}",&STAT_VAL);
 
             // sig scan asm
             let mut test = 0u32;

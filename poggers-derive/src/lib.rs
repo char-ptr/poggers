@@ -28,10 +28,10 @@ impl Parse for CreateEntryArguments {
                 
             }
         }
-        return Ok(CreateEntryArguments {
+        Ok(CreateEntryArguments {
             no_console,
             no_thread,
-        });
+        })
     }
 }
 
@@ -41,9 +41,10 @@ impl Parse for CreateEntryArguments {
 /// On windows, this will automatically allocate a console, if you don't wan't do do that, use the `no_console` attribute
 #[proc_macro_attribute]
 pub fn create_entry(attr:TokenStream, item:TokenStream) -> TokenStream {
-      let input = parse_macro_input!(item as ItemFn);
+    let input = parse_macro_input!(item as ItemFn);
+    let inputb = input.clone();
     let arg = parse_macro_input!(attr as CreateEntryArguments);
-    let input_name = input.sig.ident.clone();
+    let input_name = input.sig.ident;
 
 
     let curr_crate = match crate_name("poggers").expect("poggers-derive to be found") {
@@ -54,7 +55,7 @@ pub fn create_entry(attr:TokenStream, item:TokenStream) -> TokenStream {
         },
     };
 
-    let ret = input.sig.output.clone();
+    let ret = input.sig.output;
 
     let handle_ret = match ret {
         syn::ReturnType::Default => quote!(),
@@ -135,7 +136,7 @@ pub fn create_entry(attr:TokenStream, item:TokenStream) -> TokenStream {
 
 
     TokenStream::from(quote!{
-        #input
+        #inputb
 
         #generated
     })

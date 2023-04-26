@@ -50,8 +50,8 @@ impl<'a> ExModule<'a> {
         use super::create_snapshot::ToolSnapshot;
 
 
-        let snapshot = ToolSnapshot::new_module(Some(proc.pid)).unwrap();
-        let res = snapshot.filter(|module| module.name == name).next().ok_or(ModuleError::NoModuleFound(name.to_string()))?;
+        let mut snapshot = ToolSnapshot::new_module(Some(proc.pid)).unwrap();
+        let res = snapshot.find(|module| module.name == name).ok_or(ModuleError::NoModuleFound(name.to_string()))?;
         Ok(Self {
             process: proc,
             base_address: res.base_address,
@@ -72,10 +72,14 @@ impl<'a> ExModule<'a> {
     /// let module = ExModule::new("user32.dll", &process).unwrap();
     /// let address = module.pattern_scan("48 8B 05 ? ? ? ? 48 8B 88 ? ? ? ? 48 85 C9 74 0A").unwrap();
     /// ```
+    /// # Safety
+    /// This is safe to use as long as the pattern is correct.
     ///
     pub unsafe fn scan_virtual(&self, pattern: &str) -> Option<usize> {
-        let mut mem_info: MEMORY_BASIC_INFORMATION = Default::default();
-        mem_info.RegionSize = 0x4096;
+        let mut mem_info = MEMORY_BASIC_INFORMATION {
+            RegionSize: 0x4096,
+            ..Default::default()
+        };
 
         let mut addr = self.base_address;
 
@@ -93,27 +97,31 @@ impl<'a> ExModule<'a> {
                 )
             };
             if mem_info.State != MEM_COMMIT || mem_info.Protect == PAGE_NOACCESS {
-                addr += mem_info.RegionSize as usize;
+                addr += mem_info.RegionSize;
                 continue;
             }
             let mut page = [0u8; 0x4096];
             self
                 .raw_read(addr, &mut page as *mut u8, 0x4096)
                 .ok()?;
-            let scan_res = self.scan(pattern, (&page).iter());
+            let scan_res = self.scan(pattern, page.iter());
 
             if let Some(result) = scan_res {
                 println!("Found pattern at {:#x}", scan_res.unwrap());
                 return Some(addr + result);
             }
-            addr += 0x4096 as usize;
+            addr += 0x4096_usize;
         }
         None
     }
     /// scan pages for a value of <T>
+    /// # Safety
+    /// this should be completely safe to use
     pub unsafe fn scan_virtual_value<T>(&self, val: &T) -> Option<usize> {
-        let mut mem_info: MEMORY_BASIC_INFORMATION = Default::default();
-        mem_info.RegionSize = 0x4096;
+        let mut mem_info = MEMORY_BASIC_INFORMATION {
+            RegionSize: 0x4096,
+            ..Default::default()
+        };
 
         let mut addr = self.base_address;
 
@@ -131,7 +139,7 @@ impl<'a> ExModule<'a> {
                 )
             };
             if mem_info.Protect == PAGE_NOACCESS {
-                addr += mem_info.RegionSize as usize;
+                addr += mem_info.RegionSize;
                 continue;
             }
 
@@ -144,7 +152,7 @@ impl<'a> ExModule<'a> {
                 println!("Found pattern at {:#x}", scan_res.unwrap());
                 return Some(addr + result);
             }
-            addr += mem_info.RegionSize as usize;
+            addr += mem_info.RegionSize;
         }
         None
     }
@@ -162,7 +170,8 @@ impl<'a> ExModule<'a> {
     /// # Arguments
     /// * `addr` - Address to run function with.
     /// * `offset` - Offset to add after address is solved.
-    ///
+    /// # Safety
+    /// this is safe to use aslong as address and offset are valid
     pub unsafe fn resolve_relative_ptr(&self, addr: usize, offset: usize) -> Result<usize> {
         let real_offset = self.read::<u32>(addr)?;
         println!("Real offset: {:X?}", real_offset);
