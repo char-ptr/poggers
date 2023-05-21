@@ -96,6 +96,16 @@ impl VirtAlloc {
             VirtualFreeEx(proc.handl, self.addr as *mut c_void, self.size, MEM_RELEASE);
         }
     }
+
+    /// Get address of allocated memory
+    pub fn get_addr(&self) -> usize {
+        self.addr
+    }
+
+    /// Get size of allocated memory
+    pub fn get_size(&self) -> usize {
+        self.size
+    }
 }
 
 impl Drop for VirtAlloc {

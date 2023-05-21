@@ -225,7 +225,7 @@ impl Mem for ExProcess {
             Err(ProcessError::UnableToWriteMemory(addr).into())
         }
     }
-    unsafe fn virutal_alloc(&self, addr: usize, size: usize, prot: Protections) -> Result<crate::structures::VirtAlloc> {
+    unsafe fn virtual_alloc(&self, addr: usize, size: usize, prot: Protections) -> Result<crate::structures::VirtAlloc> {
         let alloc_ret = VirtualAllocEx(self.handl, 
             Some(addr as *mut c_void), 
             size, 

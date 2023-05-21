@@ -102,6 +102,6 @@ pub trait Mem {
     /// # Safety
     /// this should never panic even if you provide invalid addresses
 
-    unsafe fn virutal_alloc(&self, addr: usize, size: usize, prot: Protections) -> Result<VirtAlloc>;
+    unsafe fn virtual_alloc(&self, addr: usize, size: usize, prot: Protections) -> Result<VirtAlloc>;
 
 }

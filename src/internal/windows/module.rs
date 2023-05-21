@@ -205,7 +205,7 @@ impl Mem for InModule {
         (addr as *mut u8).copy_from_nonoverlapping(data, size);
         Ok(())
     }
-    unsafe fn virutal_alloc(&self, addr: usize, size: usize, _prot: crate::structures::Protections) -> Result<crate::structures::VirtAlloc> {
+    unsafe fn virtual_alloc(&self, addr: usize, size: usize, _prot: crate::structures::Protections) -> Result<crate::structures::VirtAlloc> {
         Err(InModuleError::UnableToAllocate(size, addr).into())
     }
 }

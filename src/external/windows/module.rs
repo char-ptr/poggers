@@ -205,8 +205,8 @@ impl<'a> Mem for ExModule<'a> {
     unsafe fn raw_write(&self, addr: usize,data: *const u8, size: usize) -> Result<()> {
         self.process.raw_write(addr, data, size)
     }
-    unsafe fn virutal_alloc(&self, addr: usize, size: usize, prot: Protections) -> Result<crate::structures::VirtAlloc> {
-        self.process.virutal_alloc(addr, size, prot)
+    unsafe fn virtual_alloc(&self, addr: usize, size: usize, prot: Protections) -> Result<crate::structures::VirtAlloc> {
+        self.process.virtual_alloc(addr, size, prot)
     }
 }
 
