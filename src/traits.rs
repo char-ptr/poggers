@@ -1,5 +1,7 @@
 use anyhow::Result;
 
+use crate::structures::VirtAlloc;
+
 use super::structures::Protections;
 
 
@@ -96,5 +98,10 @@ pub trait Mem {
     /// this should never panic even if you provide invalid addresses
 
     unsafe fn raw_write(&self, addr: usize,data: *const u8, size: usize) -> Result<()>;
+    /// Allocate memory to process begninning at <addr> with size <size>, needs implementation per platform
+    /// # Safety
+    /// this should never panic even if you provide invalid addresses
+
+    unsafe fn virutal_alloc(&self, addr: usize, size: usize, prot: Protections) -> Result<VirtAlloc>;
 
 }
