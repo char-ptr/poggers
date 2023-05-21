@@ -188,6 +188,9 @@ pub enum InModuleError {
     /// unable to get module information for {0}
     #[error("unable to get module information for {0}")]
     UnableToFetchInformation(String),
+    /// unable to allocate memory
+    #[error("unable to allocate memory of size {0} to {1:X}")]
+    UnableToAllocate(usize, usize),
 }
 
 impl Mem for InModule {
@@ -201,6 +204,9 @@ impl Mem for InModule {
     unsafe fn raw_write(&self, addr: usize,data: *const u8, size: usize) -> Result<()> {
         (addr as *mut u8).copy_from_nonoverlapping(data, size);
         Ok(())
+    }
+    unsafe fn virutal_alloc(&self, addr: usize, size: usize, _prot: crate::structures::Protections) -> Result<crate::structures::VirtAlloc> {
+        Err(InModuleError::UnableToAllocate(size, addr).into())
     }
 }
 impl SigScan for InModule {}

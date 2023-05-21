@@ -23,8 +23,13 @@ pub enum Protections {
     /// invalid protection
     INVALID,
 }
+use std::ffi::c_void;
+
 #[cfg(windows)]
 use windows::Win32::System::Memory::PAGE_PROTECTION_FLAGS;
+use windows::Win32::System::Memory::{VirtualFreeEx, MEM_RELEASE};
+
+use crate::external::process::ExProcess;
 #[cfg(windows)]
 impl Protections {
     /// convert into u32
@@ -72,3 +77,36 @@ impl From<Protections> for u32 {
     }
 }
 
+/// Allocted memory
+pub struct VirtAlloc {
+    pub(crate) pid: u32,
+    pub(crate) addr: usize,
+    pub(crate) size: usize
+}
+
+impl VirtAlloc {
+    #[cfg(windows)]
+    /// Free the allocated memory
+    pub fn free(self) {
+        let Ok(proc) = ExProcess::new_from_pid(self.pid) else {
+            return
+        };
+
+        unsafe {
+            VirtualFreeEx(proc.handl, self.addr as *mut c_void, self.size, MEM_RELEASE);
+        }
+    }
+}
+
+impl Drop for VirtAlloc {
+    #[cfg(windows)]
+    fn drop(&mut self) {
+        let Ok(proc) = ExProcess::new_from_pid(self.pid) else {
+            return
+        };
+
+        unsafe {
+            VirtualFreeEx(proc.handl, self.addr as *mut c_void, self.size, MEM_RELEASE);
+        }
+    }
+}

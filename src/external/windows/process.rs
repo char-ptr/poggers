@@ -9,7 +9,7 @@ use windows::Win32::{
             Debug::{ReadProcessMemory, WriteProcessMemory},
         },
         Memory::{
-            VirtualProtectEx,
+            VirtualProtectEx, VirtualAllocEx, MEM_COMMIT, MEM_RESERVE,
         },
         ProcessStatus::K32GetModuleFileNameExW,
         Threading::{
@@ -18,7 +18,7 @@ use windows::Win32::{
     },
 };
 
-use crate::structures::Protections;
+use crate::structures::{Protections, VirtAlloc};
 use crate::traits::Mem;
 
 use super::{module::ExModule, create_snapshot::{ToolSnapshot, STProcess}};
@@ -225,6 +225,22 @@ impl Mem for ExProcess {
             Err(ProcessError::UnableToWriteMemory(addr).into())
         }
     }
+    unsafe fn virutal_alloc(&self, addr: usize, size: usize, prot: Protections) -> Result<crate::structures::VirtAlloc> {
+        let alloc_ret = VirtualAllocEx(self.handl, 
+            Some(addr as *mut c_void), 
+            size, 
+            MEM_COMMIT | MEM_RESERVE, 
+            prot.native());
+        if alloc_ret.is_null() {
+            Err(ProcessError::UnableToAllocate(size, addr).into())
+        } else {
+            Ok(VirtAlloc {
+                pid: self.pid,
+                addr,
+                size,
+            })
+        }
+    }
 }
 
 /// an enum which can be either a string or a u32
@@ -247,7 +263,7 @@ impl Display for StringOru32 {
 #[derive(Debug, Error)]
 pub enum ProcessError {
     /// unable to open a handle to the process
-    #[error("Unable open process with pid or name of '{0}'")]
+    #[error("unable open process with pid or name of '{0}'")]
     UnableToOpenProcess(StringOru32),
     /// the pid specified is invalid
     #[error("pid '{0}' does not exist")]
@@ -264,6 +280,9 @@ pub enum ProcessError {
     /// unable to change the protection of the memory
     #[error("unable to change memory protection @ {0:X}")]
     UnableToChangeProtection(usize),
+    /// unable to allocate memory
+    #[error("unable to allocate memory of size {0} to {1:X}")]
+    UnableToAllocate(usize, usize),
 }
 
 impl Drop for ExProcess {
