@@ -1,17 +1,16 @@
-use std::{os::raw::c_void};
+use std::os::raw::c_void;
 
 use windows::Win32::{
-    System::{
-        Memory::{VirtualQueryEx, MEMORY_BASIC_INFORMATION, MEM_COMMIT, PAGE_NOACCESS},
-    }, Foundation::HMODULE,
+    Foundation::HMODULE,
+    System::Memory::{VirtualQueryEx, MEMORY_BASIC_INFORMATION, MEM_COMMIT, PAGE_NOACCESS},
 };
 
 use super::process::ExProcess;
-use anyhow::{Result};
-use thiserror::Error;
 use crate::sigscan::SigScan;
 use crate::structures::Protections;
 use crate::traits::Mem;
+use anyhow::Result;
+use thiserror::Error;
 
 /// A module in a process.
 #[derive(Debug)]
@@ -49,15 +48,16 @@ impl<'a> ExModule<'a> {
     pub fn new(name: &str, proc: &'a ExProcess) -> Result<Self> {
         use super::create_snapshot::ToolSnapshot;
 
-
         let mut snapshot = ToolSnapshot::new_module(Some(proc.pid)).unwrap();
-        let res = snapshot.find(|module| module.name == name).ok_or(ModuleError::NoModuleFound(name.to_string()))?;
+        let res = snapshot
+            .find(|module| module.name == name)
+            .ok_or(ModuleError::NoModuleFound(name.to_string()))?;
         Ok(Self {
             process: proc,
             base_address: res.base_address,
             size: res.size,
             name: res.name,
-            handle: res.handle
+            handle: res.handle,
         })
     }
 
@@ -101,9 +101,7 @@ impl<'a> ExModule<'a> {
                 continue;
             }
             let mut page = [0u8; 0x4096];
-            self
-                .raw_read(addr, &mut page as *mut u8, 0x4096)
-                .ok()?;
+            self.raw_read(addr, &mut page as *mut u8, 0x4096).ok()?;
             let scan_res = self.scan(pattern, page.iter());
 
             if let Some(result) = scan_res {
@@ -143,9 +141,7 @@ impl<'a> ExModule<'a> {
                 continue;
             }
 
-            let page = self
-                .read_sized(addr, mem_info.RegionSize - 1)
-                .ok()?;
+            let page = self.read_sized(addr, mem_info.RegionSize - 1).ok()?;
             let scan_res = self.scan_batch_value(val, &page);
 
             if let Some(result) = scan_res {
@@ -162,7 +158,7 @@ impl<'a> ExModule<'a> {
     /// * `addr` - The address to find the relative distance.
     /// * `offset` - Offset to add after address is solved.
     ///
-    pub fn get_relative(&self, addr: usize,offset:usize) -> usize {
+    pub fn get_relative(&self, addr: usize, offset: usize) -> usize {
         (addr - self.base_address) + offset
     }
 
@@ -175,7 +171,7 @@ impl<'a> ExModule<'a> {
     pub unsafe fn resolve_relative_ptr(&self, addr: usize, offset: usize) -> Result<usize> {
         let real_offset = self.read::<u32>(addr)?;
         println!("Real offset: {:X?}", real_offset);
-        let rel = self.get_relative(addr,offset);
+        let rel = self.get_relative(addr, offset);
         let real = rel + real_offset as usize;
         println!("Real: {:X?}", real);
         Ok(self.base_address + real)
@@ -196,16 +192,26 @@ pub enum ModuleError {
 impl<'a> SigScan for ExModule<'a> {}
 
 impl<'a> Mem for ExModule<'a> {
-    unsafe fn alter_protection(&self, addr:usize, size: usize, prot: Protections) -> Result<Protections> {
+    unsafe fn alter_protection(
+        &self,
+        addr: usize,
+        size: usize,
+        prot: Protections,
+    ) -> Result<Protections> {
         self.process.alter_protection(addr, size, prot)
     }
-    unsafe fn raw_read(&self, addr: usize,data: *mut u8, size: usize) -> Result<()> {
+    unsafe fn raw_read(&self, addr: usize, data: *mut u8, size: usize) -> Result<()> {
         self.process.raw_read(addr, data, size)
     }
-    unsafe fn raw_write(&self, addr: usize,data: *const u8, size: usize) -> Result<()> {
+    unsafe fn raw_write(&self, addr: usize, data: *const u8, size: usize) -> Result<()> {
         self.process.raw_write(addr, data, size)
     }
-    unsafe fn virtual_alloc(&self, addr: usize, size: usize, prot: Protections) -> Result<crate::structures::VirtAlloc> {
+    unsafe fn virtual_alloc(
+        &self,
+        addr: usize,
+        size: usize,
+        prot: Protections,
+    ) -> Result<crate::structures::VirtAlloc> {
         self.process.virtual_alloc(addr, size, prot)
     }
 }

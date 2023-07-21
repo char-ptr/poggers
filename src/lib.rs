@@ -11,7 +11,7 @@
 //!  * [`Mem`] - A trait which implements memory functionality for [`ExProcess`] and [`ExModule`].
 //!  * [`SigScan`] - A trait which implements signature scanning functionality for [`ExProcess`] and [`ExModule`].
 //!  * [`ToolSnapshot`] - A wrapper around the toolhelp32snapshot api using rust iterators.
-//! 
+//!
 //!  With these two constructs it should make it pretty easy to safe and efficient external cheats.
 //!  ## Internal
 //!  Poggers also allows you to make internal cheats for games. The most important structs & traits are:
@@ -33,20 +33,18 @@
 //!  ## License
 //!  This project is licensed under the GPL-2.0 license.
 
-
-
 #![warn(missing_docs)]
 #![feature(generic_const_exprs)]
 /// exports primarily for [`poggers-derive`]
 pub mod exports;
 
-/// Holder of main traits, primarily [`Mem`]
-pub mod traits;
-/// Holder of the [`SigScan`] trait
-pub mod sigscan;
 /// For all external related things.
 pub mod external;
 /// For all internal related things.
 pub mod internal;
+/// Holder of the [`SigScan`] trait
+pub mod sigscan;
 /// Structures which may be used cross platform.
 pub mod structures;
+/// Holder of main traits, primarily [`Mem`]
+pub mod traits;

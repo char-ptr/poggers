@@ -1,16 +1,22 @@
-use std::{os::raw::c_void, ffi::CString};
+use std::{ffi::CString, os::raw::c_void};
 
-use windows::{Win32::{
-    System::{
-        Memory::{MEMORY_BASIC_INFORMATION, MEM_COMMIT, PAGE_NOACCESS, VirtualQuery}, LibraryLoader::{GetProcAddress, GetModuleHandleW}, ProcessStatus::{GetModuleInformation, MODULEINFO}, Threading::GetCurrentProcess,
-    }, Foundation::HMODULE,
-}, core::{PCWSTR, PCSTR}};
+use windows::{
+    core::{PCSTR, PCWSTR},
+    Win32::{
+        Foundation::HMODULE,
+        System::{
+            LibraryLoader::{GetModuleHandleW, GetProcAddress},
+            Memory::{VirtualQuery, MEMORY_BASIC_INFORMATION, MEM_COMMIT, PAGE_NOACCESS},
+            ProcessStatus::{GetModuleInformation, MODULEINFO},
+            Threading::GetCurrentProcess,
+        },
+    },
+};
 
 use crate::{sigscan::SigScan, traits::Mem};
 
-use anyhow::{Result};
+use anyhow::Result;
 use thiserror::Error;
-
 
 /// A module in a process.
 #[derive(Debug)]
@@ -40,16 +46,23 @@ impl InModule {
     /// * [`ModuleError::NoModuleFound`] - The module was not found in current process.
     /// * [`ModuleError::UnableToOpenHandle`] - The module handle could not be retrieved.
     pub fn new(name: &str) -> Result<Self> {
-
         let wstr = widestring::U16CString::from_str(name).unwrap();
 
-        let module = unsafe {GetModuleHandleW(PCWSTR::from_raw(wstr.as_ptr()))}.or(Err(InModuleError::NoModuleFound(name.to_string())))?;
+        let module = unsafe { GetModuleHandleW(PCWSTR::from_raw(wstr.as_ptr())) }
+            .or(Err(InModuleError::NoModuleFound(name.to_string())))?;
 
-        let mut mod_info : MODULEINFO = Default::default();
+        let mut mod_info: MODULEINFO = Default::default();
 
-        let proc = unsafe { GetCurrentProcess() } ; 
+        let proc = unsafe { GetCurrentProcess() };
 
-        let info = unsafe { GetModuleInformation(proc, module, &mut mod_info, std::mem::size_of::<MODULEINFO>() as u32) } ;
+        let info = unsafe {
+            GetModuleInformation(
+                proc,
+                module,
+                &mut mod_info,
+                std::mem::size_of::<MODULEINFO>() as u32,
+            )
+        };
 
         if info == false {
             return Err(InModuleError::UnableToFetchInformation(name.to_string()).into());
@@ -67,16 +80,17 @@ impl InModule {
     /// # Arguments
     /// * `name` - Name of the exported symbol.
     /// # Example
-    /// ``` 
+    /// ```
     /// use poggers::internal::windows::module::InModule;
     /// let module = InModule::new("ntdll.dll").unwrap();
     /// let nt_query_info = module.get_process_address("NtQuerySystemInformation").unwrap();
     /// ```
-    /// 
+    ///
     pub fn get_process_address<T>(&self, name: &str) -> Option<T> {
         let wname = CString::new(name).unwrap();
 
-        let result = unsafe { GetProcAddress(self.handle, PCSTR::from_raw(wname.as_ptr() as *const u8)) };
+        let result =
+            unsafe { GetProcAddress(self.handle, PCSTR::from_raw(wname.as_ptr() as *const u8)) };
         result.map(|proc| unsafe { std::mem::transmute_copy(&proc) })
 
         // match unsafe { GetProcAddress(self.handle, lpc_name) } {
@@ -96,7 +110,7 @@ impl InModule {
     /// let module = InModule::new("user32.dll").unwrap();
     /// let address = module.scan_virtual("48 8B 05 ? ? ? ? 48 8B 88 ? ? ? ? 48 85 C9 74 0A").unwrap();
     /// ```
-    /// 
+    ///
     pub fn scan_virtual(&self, pattern: &str) -> Option<usize> {
         let mut mem_info = MEMORY_BASIC_INFORMATION {
             RegionSize: 0x4096,
@@ -107,7 +121,7 @@ impl InModule {
 
         let mut addr = self.base_address;
 
-        loop { 
+        loop {
             if addr >= self.base_address + self.size {
                 break;
             }
@@ -124,8 +138,7 @@ impl InModule {
                 continue;
             }
 
-            let page = super::super::utils::read_sized(addr, mem_info.RegionSize - 1)
-                .ok()?;
+            let page = super::super::utils::read_sized(addr, mem_info.RegionSize - 1).ok()?;
 
             let scan_res = self.scan(pattern, page.iter());
 
@@ -138,7 +151,6 @@ impl InModule {
         None
     }
 
-
     /// Gets distance of address from base address.
     /// # Arguments
     /// * `addr` - The address to find the relative distance.
@@ -148,8 +160,8 @@ impl InModule {
     /// let module = InModule::new("ntdll.dll").unwrap();
     /// let relative = module.get_relative(0xDEADBEEF, 0x15);
     /// ```
-    /// 
-    pub fn get_relative(&self, addr: usize, offset:usize) -> usize {
+    ///
+    pub fn get_relative(&self, addr: usize, offset: usize) -> usize {
         (addr - self.base_address) + offset
     }
 
@@ -194,18 +206,28 @@ pub enum InModuleError {
 }
 
 impl Mem for InModule {
-    unsafe fn alter_protection(&self, _addr:usize, _size: usize, _prot: crate::structures::Protections) -> Result<crate::structures::Protections> {
+    unsafe fn alter_protection(
+        &self,
+        _addr: usize,
+        _size: usize,
+        _prot: crate::structures::Protections,
+    ) -> Result<crate::structures::Protections> {
         todo!()
     }
-    unsafe fn raw_read(&self, addr: usize,data: *mut u8, size: usize) -> Result<()> {
+    unsafe fn raw_read(&self, addr: usize, data: *mut u8, size: usize) -> Result<()> {
         (addr as *mut u8).copy_to_nonoverlapping(data, size);
         Ok(())
     }
-    unsafe fn raw_write(&self, addr: usize,data: *const u8, size: usize) -> Result<()> {
+    unsafe fn raw_write(&self, addr: usize, data: *const u8, size: usize) -> Result<()> {
         (addr as *mut u8).copy_from_nonoverlapping(data, size);
         Ok(())
     }
-    unsafe fn virtual_alloc(&self, _addr: usize, _size: usize, _prot: crate::structures::Protections) -> Result<crate::structures::VirtAlloc> {
+    unsafe fn virtual_alloc(
+        &self,
+        _addr: usize,
+        _size: usize,
+        _prot: crate::structures::Protections,
+    ) -> Result<crate::structures::VirtAlloc> {
         todo!()
     }
 }

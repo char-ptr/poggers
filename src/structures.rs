@@ -48,7 +48,7 @@ impl Protections {
             Protections::INVALID => 0x0,
         }
     }
-    /// convert into native version 
+    /// convert into native version
     pub fn native(&self) -> PAGE_PROTECTION_FLAGS {
         PAGE_PROTECTION_FLAGS(self.u32())
     }
@@ -81,7 +81,7 @@ impl From<Protections> for u32 {
 pub struct VirtAlloc {
     pub(crate) pid: u32,
     pub(crate) addr: usize,
-    pub(crate) size: usize
+    pub(crate) size: usize,
 }
 
 impl VirtAlloc {
@@ -89,7 +89,7 @@ impl VirtAlloc {
     /// Free the allocated memory
     pub fn free(self) {
         let Ok(proc) = ExProcess::new_from_pid(self.pid) else {
-            return
+            return;
         };
 
         unsafe {
@@ -112,7 +112,7 @@ impl Drop for VirtAlloc {
     #[cfg(windows)]
     fn drop(&mut self) {
         let Ok(proc) = ExProcess::new_from_pid(self.pid) else {
-            return
+            return;
         };
 
         unsafe {

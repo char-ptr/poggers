@@ -6,7 +6,7 @@ pub struct PageProtection {
 pub struct Page {
     pub base: usize,
     pub end: usize,
-    pub protections : PageProtection,
+    pub protections: PageProtection,
 }
 pub struct ExModule<'a> {
     pub name: String,

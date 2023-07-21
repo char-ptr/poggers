@@ -1,27 +1,24 @@
-use anyhow::{Result};
+use anyhow::Result;
 use std::{ffi::c_void, fmt::Display};
 use thiserror::Error;
 
 use windows::Win32::{
     Foundation::{CloseHandle, GetLastError, HANDLE, MAX_PATH},
     System::{
-        Diagnostics::{
-            Debug::{ReadProcessMemory, WriteProcessMemory},
-        },
-        Memory::{
-            VirtualProtectEx, VirtualAllocEx, MEM_COMMIT, MEM_RESERVE,
-        },
+        Diagnostics::Debug::{ReadProcessMemory, WriteProcessMemory},
+        Memory::{VirtualAllocEx, VirtualProtectEx, MEM_COMMIT, MEM_RESERVE},
         ProcessStatus::GetModuleFileNameExW,
-        Threading::{
-            GetExitCodeProcess, OpenProcess, TerminateProcess, PROCESS_ALL_ACCESS,
-        },
+        Threading::{GetExitCodeProcess, OpenProcess, TerminateProcess, PROCESS_ALL_ACCESS},
     },
 };
 
 use crate::structures::{Protections, VirtAlloc};
 use crate::traits::Mem;
 
-use super::{module::ExModule, create_snapshot::{ToolSnapshot, STProcess}};
+use super::{
+    create_snapshot::{STProcess, ToolSnapshot},
+    module::ExModule,
+};
 
 /// A Class describing a windows process
 #[derive(Debug)]
@@ -45,7 +42,7 @@ impl<'a> ExProcess {
     /// ```
     pub fn new_from_pid(pid: u32) -> Result<ExProcess> {
         let handle = Self::open_handle(pid)?;
-        let process_name = Self::get_name_from_pid(pid,&handle)?;
+        let process_name = Self::get_name_from_pid(pid, &handle)?;
 
         Ok(ExProcess {
             handl: handle,
@@ -94,7 +91,7 @@ impl<'a> ExProcess {
             .ok_or(ProcessError::NoProcessFound(StringOru32::String(proc_name.to_string())).into())
     }
     /// get the name of the process
-    pub fn get_name_from_pid(process_id: u32, hndl : &HANDLE) -> Result<String> {
+    pub fn get_name_from_pid(process_id: u32, hndl: &HANDLE) -> Result<String> {
         if process_id == 0 {
             return Err(ProcessError::InvalidPid(process_id).into());
         }
@@ -225,12 +222,19 @@ impl Mem for ExProcess {
             Err(ProcessError::UnableToWriteMemory(addr).into())
         }
     }
-    unsafe fn virtual_alloc(&self, addr: usize, size: usize, prot: Protections) -> Result<crate::structures::VirtAlloc> {
-        let alloc_ret = VirtualAllocEx(self.handl, 
-            Some(addr as *mut c_void), 
-            size, 
-            MEM_COMMIT | MEM_RESERVE, 
-            prot.native());
+    unsafe fn virtual_alloc(
+        &self,
+        addr: usize,
+        size: usize,
+        prot: Protections,
+    ) -> Result<crate::structures::VirtAlloc> {
+        let alloc_ret = VirtualAllocEx(
+            self.handl,
+            Some(addr as *mut c_void),
+            size,
+            MEM_COMMIT | MEM_RESERVE,
+            prot.native(),
+        );
         if alloc_ret.is_null() {
             Err(ProcessError::UnableToAllocate(size, addr).into())
         } else {
