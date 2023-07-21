@@ -2,8 +2,8 @@ use std::{os::raw::c_void, ffi::CString};
 
 use windows::{Win32::{
     System::{
-        Memory::{MEMORY_BASIC_INFORMATION, MEM_COMMIT, PAGE_NOACCESS, VirtualQuery}, LibraryLoader::{GetProcAddress, GetModuleHandleW}, ProcessStatus::{K32GetModuleInformation, MODULEINFO}, Threading::GetCurrentProcess,
-    }, Foundation::HINSTANCE,
+        Memory::{MEMORY_BASIC_INFORMATION, MEM_COMMIT, PAGE_NOACCESS, VirtualQuery}, LibraryLoader::{GetProcAddress, GetModuleHandleW}, ProcessStatus::{GetModuleInformation, MODULEINFO}, Threading::GetCurrentProcess,
+    }, Foundation::HMODULE,
 }, core::{PCWSTR, PCSTR}};
 
 use crate::{sigscan::SigScan, traits::Mem};
@@ -20,7 +20,7 @@ pub struct InModule {
     /// The size of the module.
     pub size: usize,
     pub(crate) name: String,
-    pub(crate) handle: HINSTANCE,
+    pub(crate) handle: HMODULE,
 }
 
 impl InModule {
@@ -49,7 +49,7 @@ impl InModule {
 
         let proc = unsafe { GetCurrentProcess() } ; 
 
-        let info = unsafe { K32GetModuleInformation(proc, module, &mut mod_info, std::mem::size_of::<MODULEINFO>() as u32) } ;
+        let info = unsafe { GetModuleInformation(proc, module, &mut mod_info, std::mem::size_of::<MODULEINFO>() as u32) } ;
 
         if info == false {
             return Err(InModuleError::UnableToFetchInformation(name.to_string()).into());
