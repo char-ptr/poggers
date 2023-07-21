@@ -1,4 +1,4 @@
-use std::{time::Duration};
+use std::time::Duration;
 
 
 static mut STAT_VAL : i32 = 0x7116491; 
@@ -10,13 +10,13 @@ fn main() {
             println!("{}",&STAT_VAL);
 
             // sig scan asm
-            let mut test = 0u32;
+            let mut _test = 0u32;
             // increment stat_val by 1
 
             std::arch::asm!{
                 "add rax, 591754",
 
-                inout("rax") test,
+                inout("rax") _test,
             }
 
             // timeout 
