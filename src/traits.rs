@@ -89,6 +89,31 @@ pub trait Mem {
         Ok(data)
     }
 
+    /// Resolve a vector of pointers to a single address
+    /// # arguments
+    /// * addr - the base address
+    /// * offsets - a vector of offsets
+    /// # example
+    /// ```
+    /// use poggers::external::process::ExProcess;
+    /// let mut process = ExProcess::new_from_name("notepad.exe".to_string()).unwrap();
+    /// unsafe {
+    ///     let addrs: Vec<usize> = vec![0x0, 0x4, 0x8];
+    ///     let addr = process.solve_dma(0x12345678, &addrs).unwrap();
+    /// }
+    /// ```
+    /// # Safety
+    /// safe to use if address is valid and offsets don't go down into a null pointer
+    
+    unsafe fn solve_dma(&self, addr: usize, offsets: &Vec<usize>) -> Result<usize> {
+        let mut ptr = addr;
+        for offset in offsets {
+            ptr = self.read::<usize>(addr)?;
+            ptr += offset;
+        }
+        Ok(ptr)
+    }
+
     /// Alter the protection of a memory region, needs implementation per platform
     /// # Safety
     /// this should never panic even if you provide invalid addresses
