@@ -13,14 +13,13 @@ use windows::{
     },
 };
 
-use crate::{sigscan::SigScan, traits::Mem};
+use crate::{sigscan::SigScan, traits::{Mem, MemError}};
 
-use anyhow::Result;
 use thiserror::Error;
 
 
 /// a util to read `size` bytes from current process memory
-pub fn read_sized(addr:usize, size:usize) -> Result<Vec<u8>> {
+pub fn read_sized(addr:usize, size:usize) -> Result<Vec<u8>,InternalError> {
     let mut buffer = vec![0; size];
     let ptr = addr as *const u8;
     if ptr.is_null() {
@@ -69,7 +68,7 @@ impl InModule {
     /// # Errors
     /// * [`ModuleError::NoModuleFound`] - The module was not found in current process.
     /// * [`ModuleError::UnableToOpenHandle`] - The module handle could not be retrieved.
-    pub fn new(name: &str) -> Result<Self> {
+    pub fn new(name: &str) -> Result<Self,InModuleError> {
         let wstr = widestring::U16CString::from_str(name).unwrap();
 
         let module = unsafe { GetModuleHandleW(PCWSTR::from_raw(wstr.as_ptr())) }
@@ -89,7 +88,7 @@ impl InModule {
         };
 
         if info == false {
-            return Err(InModuleError::UnableToFetchInformation(name.to_string()).into());
+            return Err(InModuleError::UnableToFetchInformation(name.to_string()));
         }
 
         Ok(Self {
@@ -201,7 +200,7 @@ impl InModule {
     /// ```
     /// # Safety
     /// this is fine as long as address and offset lead to a valid address
-    pub unsafe fn resolve_relative_ptr(&self, addr: usize, offset: usize) -> Result<usize> {
+    pub unsafe fn resolve_relative_ptr(&self, addr: usize, offset: usize) -> Result<usize,MemError> {
         let real_offset = self.read::<u32>(addr)?;
         println!("Real offset: {:X?}", real_offset);
         let rel = self.get_relative(addr, offset);

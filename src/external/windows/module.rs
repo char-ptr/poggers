@@ -9,7 +9,6 @@ use super::process::ExProcess;
 use crate::{sigscan::SigScan, traits::MemError};
 use crate::structures::Protections;
 use crate::traits::Mem;
-use anyhow::Result;
 use thiserror::Error;
 
 /// A module in a process.
@@ -45,7 +44,7 @@ impl<'a> ExModule<'a> {
     /// * [`ModuleError::NoModuleFound`] - The module was not found in the process.
     /// * [`ModuleError::UnableToOpenHandle`] - The module handle could not be retrieved.
     #[cfg(target_os = "windows")]
-    pub fn new(name: &str, proc: &'a ExProcess) -> Result<Self> {
+    pub fn new(name: &str, proc: &'a ExProcess) -> Result<Self,ModuleError> {
         use super::create_snapshot::ToolSnapshot;
 
         let mut snapshot = ToolSnapshot::new_module(Some(proc.pid)).unwrap();
@@ -168,7 +167,7 @@ impl<'a> ExModule<'a> {
     /// * `offset` - Offset to add after address is solved.
     /// # Safety
     /// this is safe to use aslong as address and offset are valid
-    pub unsafe fn resolve_relative_ptr(&self, addr: usize, offset: usize) -> Result<usize> {
+    pub unsafe fn resolve_relative_ptr(&self, addr: usize, offset: usize) -> Result<usize,MemError> {
         let real_offset = self.read::<u32>(addr)?;
         println!("Real offset: {:X?}", real_offset);
         let rel = self.get_relative(addr, offset);

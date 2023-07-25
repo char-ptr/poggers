@@ -1,6 +1,5 @@
 use std::{ffi::CStr, marker::PhantomData};
 
-use anyhow::Result;
 use thiserror::Error;
 use windows::Win32::{
     Foundation::{CloseHandle, HANDLE, HMODULE},
@@ -54,17 +53,17 @@ pub struct ToolSnapshot<T = NoTypeSel> {
 }
 impl ToolSnapshot {
     /// Create a new process snapshot
-    pub fn new_process() -> Result<ToolSnapshot<STProcess>> {
+    pub fn new_process() -> Result<ToolSnapshot<STProcess>,SnapshotToolError> {
         ToolSnapshot::<STProcess>::new()
     }
     /// Create a new module snapshot
-    pub fn new_module(proc_id: Option<u32>) -> Result<ToolSnapshot<STModule>> {
+    pub fn new_module(proc_id: Option<u32>) -> Result<ToolSnapshot<STModule>,SnapshotToolError> {
         ToolSnapshot::<STModule>::new(proc_id)
     }
 }
 impl ToolSnapshot<STModule> {
     /// Creates a new module snapshot
-    pub fn new(proc_id: Option<u32>) -> Result<Self> {
+    pub fn new(proc_id: Option<u32>) -> Result<Self,SnapshotToolError> {
         let handle = unsafe {
             CreateToolhelp32Snapshot(
                 TH32CS_SNAPMODULE | TH32CS_SNAPMODULE32,
@@ -135,7 +134,7 @@ impl Iterator for ToolSnapshot<STModule> {
 }
 impl ToolSnapshot<STProcess> {
     /// Creates a new process snapshot
-    pub fn new() -> Result<Self> {
+    pub fn new() -> Result<Self,SnapshotToolError> {
         let handle = unsafe { CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0) };
         handle
             .map(|handle| Self {

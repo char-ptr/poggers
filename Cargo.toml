@@ -22,7 +22,6 @@ lto=true
 inherits = "release"
 debug = true
 [dependencies]
-anyhow = "1.0.72"
 thiserror = "1.0.44"
 log = "0.4.19"
 widestring = "1.0.2"

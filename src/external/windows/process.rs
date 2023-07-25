@@ -1,4 +1,3 @@
-use anyhow::Result;
 use std::{ffi::c_void, fmt::Display};
 use thiserror::Error;
 
@@ -16,8 +15,8 @@ use crate::{structures::{Protections, VirtAlloc}, traits::MemError};
 use crate::traits::Mem;
 
 use super::{
-    create_snapshot::{STProcess, ToolSnapshot},
-    module::ExModule,
+    create_snapshot::{STProcess, ToolSnapshot, SnapshotToolError},
+    module::{ExModule, ModuleError},
 };
 
 /// A Class describing a windows process
@@ -40,7 +39,7 @@ impl<'a> ExProcess {
     /// use poggers::external::process::ExProcess;
     /// let proc = ExProcess::new(1234).unwrap();
     /// ```
-    pub fn new_from_pid(pid: u32) -> Result<ExProcess> {
+    pub fn new_from_pid(pid: u32) -> Result<ExProcess,ProcessError> {
         let handle = Self::open_handle(pid)?;
         let process_name = Self::get_name_from_pid(pid, &handle)?;
 
@@ -56,7 +55,7 @@ impl<'a> ExProcess {
     /// use poggers::external::process::ExProcess;
     /// let process = ExProcess::new("csgo.exe").unwrap();
     /// ```
-    pub fn new_from_name(name: String) -> Result<ExProcess> {
+    pub fn new_from_name(name: String) -> Result<ExProcess,ProcessError> {
         let pid = Self::get_pid_from_name(&name)?;
         let handle = Self::open_handle(pid)?;
 
@@ -83,7 +82,7 @@ impl<'a> ExProcess {
             && exit_code == 259
     }
 
-    fn get_pid_from_name(proc_name: &str) -> Result<u32> {
+    fn get_pid_from_name(proc_name: &str) -> Result<u32,ProcessError> {
         let mut snapshot = ToolSnapshot::new_process()?;
         snapshot
             .find(|x| x.exe_path == proc_name)
@@ -91,7 +90,7 @@ impl<'a> ExProcess {
             .ok_or(ProcessError::NoProcessFound(StringOru32::String(proc_name.to_string())).into())
     }
     /// get the name of the process
-    pub fn get_name_from_pid(process_id: u32, hndl: &HANDLE) -> Result<String> {
+    pub fn get_name_from_pid(process_id: u32, hndl: &HANDLE) -> Result<String,ProcessError> {
         if process_id == 0 {
             return Err(ProcessError::InvalidPid(process_id).into());
         }
@@ -106,7 +105,7 @@ impl<'a> ExProcess {
             .to_string())
     }
 
-    fn open_handle(process_id: u32) -> Result<HANDLE> {
+    fn open_handle(process_id: u32) -> Result<HANDLE,ProcessError> {
         let hndl = unsafe {
             OpenProcess(PROCESS_ALL_ACCESS, false, process_id).or(Err(
                 ProcessError::UnableToOpenProcess(StringOru32::U32(process_id)),
@@ -127,11 +126,11 @@ impl<'a> ExProcess {
     /// let mut process = ExProcess::new_from_name("notepad.exe".to_string()).unwrap();
     /// let base_module = process.get_base_module().unwrap();
     /// ```
-    pub fn get_base_module(&'a self) -> Result<ExModule<'a>> {
+    pub fn get_base_module(&'a self) -> Result<ExModule<'a>,ModuleError> {
         ExModule::new(&self.name, self)
     }
     /// Get a module by name
-    pub fn get_module(&'a self, name: &str) -> Result<ExModule<'a>> {
+    pub fn get_module(&'a self, name: &str) -> Result<ExModule<'a>,ModuleError> {
         ExModule::new(name, self)
     }
 
@@ -264,6 +263,9 @@ pub enum ProcessError {
     /// unable to allocate memory
     #[error("unable to allocate memory of size {0} to {1:X}")]
     UnableToAllocate(usize, usize),
+    /// tool snapshot error
+    #[error("tool snapshot error: {0}")]
+    ToolSnapshotError(#[from] SnapshotToolError),
 }
 
 impl Drop for ExProcess {
