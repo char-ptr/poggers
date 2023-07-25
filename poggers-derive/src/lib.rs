@@ -8,6 +8,7 @@ use syn::{parse::Parse, parse_macro_input, punctuated::Punctuated, Ident, ItemFn
 struct CreateEntryArguments {
     no_console: bool,
     no_thread: bool,
+    no_free: bool,
 }
 
 impl Parse for CreateEntryArguments {
@@ -15,6 +16,7 @@ impl Parse for CreateEntryArguments {
         let argss = Punctuated::<Ident, Token![,]>::parse_terminated(input)?;
         let mut no_console = false;
         let mut no_thread = false;
+        let mut no_free = false;
         for arg in argss {
             match arg.to_string().as_str() {
                 "no_console" => {
@@ -23,12 +25,16 @@ impl Parse for CreateEntryArguments {
                 "no_thread" => {
                     no_thread = true;
                 }
+                "no_free" => {
+                    no_free = true;
+                }
                 _ => {}
             }
         }
         Ok(CreateEntryArguments {
             no_console,
             no_thread,
+            no_free,
         })
     }
 }
@@ -80,7 +86,7 @@ pub fn create_entry(attr: TokenStream, item: TokenStream) -> TokenStream {
             };
         }
     };
-    let free_console = if arg.no_console {
+    let free_console = if arg.no_console || arg.no_free {
         quote! {}
     } else {
         quote! {

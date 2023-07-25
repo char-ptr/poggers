@@ -76,7 +76,7 @@ impl ToolSnapshot<STModule> {
                 first_complete: false,
                 phantom: PhantomData,
             })
-            .or(Err(SnapshotToolError::CreateSnapshotError.into()))
+            .or(Err(SnapshotToolError::CreateSnapshotError))
     }
 }
 impl Iterator for ToolSnapshot<STModule> {
@@ -142,7 +142,7 @@ impl ToolSnapshot<STProcess> {
                 first_complete: false,
                 phantom: PhantomData,
             })
-            .or(Err(SnapshotToolError::CreateSnapshotError.into()))
+            .or(Err(SnapshotToolError::CreateSnapshotError))
     }
 }
 impl Iterator for ToolSnapshot<STProcess> {
