@@ -2,9 +2,7 @@
 #[cfg(windows)]
 /// Windows specific internal memory stuff
 pub mod windows;
-/// cross platform utilities
-pub mod utils;
-
+#[cfg(windows)]
 #[cfg(test)]
 pub mod tests {
 
