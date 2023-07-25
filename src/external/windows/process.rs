@@ -87,12 +87,12 @@ impl<'a> ExProcess {
         snapshot
             .find(|x| x.exe_path == proc_name)
             .map(|x| x.id)
-            .ok_or(ProcessError::NoProcessFound(StringOru32::String(proc_name.to_string())).into())
+            .ok_or(ProcessError::NoProcessFound(StringOru32::String(proc_name.to_string())))
     }
     /// get the name of the process
     pub fn get_name_from_pid(process_id: u32, hndl: &HANDLE) -> Result<String,ProcessError> {
         if process_id == 0 {
-            return Err(ProcessError::InvalidPid(process_id).into());
+            return Err(ProcessError::InvalidPid(process_id));
         }
         let mut buffer = [0u16; MAX_PATH as usize];
         unsafe { GetModuleFileNameExW(*hndl, None, &mut buffer) };
@@ -112,7 +112,7 @@ impl<'a> ExProcess {
             ))?
         };
         if hndl.is_invalid() {
-            Err(ProcessError::UnableToOpenProcess(StringOru32::U32(process_id)).into())
+            Err(ProcessError::UnableToOpenProcess(StringOru32::U32(process_id)))
         } else {
             Ok(hndl)
         }
@@ -161,12 +161,11 @@ impl Mem for ExProcess {
             Ok(old_protect.0.into())
         } else {
             // plan to match in the future, cba atm
-            match unsafe { GetLastError() } {
-                e => {
-                    println!("Error: {:?}", e);
-                }
+            let e = unsafe { GetLastError() };
+            {
+                println!("Error: {:?}", e);
             }
-            Err(MemError::ProtectFailure(addr))
+            Err(MemError::ProtectFailure(addr,size,prot))
         }
     }
     unsafe fn raw_read(&self, addr: usize, data: *mut u8, size: usize) -> Result<(), MemError> {
@@ -198,6 +197,7 @@ impl Mem for ExProcess {
             Err(MemError::WriteFailure(addr))
         }
     }
+    #[must_use = "keep the virtalloc alive to keep the memory allocated"]
     unsafe fn virtual_alloc(
         &self,
         addr: usize,
@@ -218,6 +218,7 @@ impl Mem for ExProcess {
                 pid: self.pid,
                 addr,
                 size,
+                intrn: false,
             })
         }
     }

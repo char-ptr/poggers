@@ -118,8 +118,8 @@ pub enum MemError {
     #[error("Write failed [{0:X}]")]
     WriteFailure(usize),
     /// Protection update failed
-    #[error("Protection update failed [{0:X}]")]
-    ProtectFailure(usize),
+    #[error("Protection update to {1} failed [{0:X}]+{1:X}")]
+    ProtectFailure(usize,usize, Protections),
     /// Unable to allocate memory
     #[error("VirtualAlloc failed [{0:X}]+{1:X}")]
     AllocFailure(usize, usize),

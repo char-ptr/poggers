@@ -6,14 +6,14 @@ use windows::{
         Foundation::HMODULE,
         System::{
             LibraryLoader::{GetModuleHandleW, GetProcAddress},
-            Memory::{VirtualQuery, MEMORY_BASIC_INFORMATION, MEM_COMMIT, PAGE_NOACCESS},
+            Memory::{VirtualQuery, MEMORY_BASIC_INFORMATION, MEM_COMMIT, PAGE_NOACCESS, VirtualProtect, PAGE_PROTECTION_FLAGS, VirtualAlloc, MEM_RESERVE},
             ProcessStatus::{GetModuleInformation, MODULEINFO},
             Threading::GetCurrentProcess,
         },
     },
 };
 
-use crate::{sigscan::SigScan, traits::{Mem, MemError}};
+use crate::{sigscan::SigScan, traits::{Mem, MemError}, structures::VirtAlloc};
 
 use thiserror::Error;
 
@@ -230,7 +230,18 @@ pub enum InModuleError {
 
 impl Mem for InModule {
     unsafe fn alter_protection(&self,addr:usize, size: usize, prot: crate::structures::Protections) -> std::result::Result<crate::structures::Protections,crate::traits::MemError> {
-        todo!()
+
+        let mut old_prot = PAGE_PROTECTION_FLAGS::default();
+
+        let prot_as_win = prot.native();
+
+        let ok = VirtualProtect(addr as *const c_void, size, prot_as_win, &mut old_prot);
+
+        if ok.as_bool() {
+            Ok(prot)
+        } else {
+            Err(MemError::ProtectFailure(addr, size, prot))
+        }
     }
 
     unsafe fn raw_read(&self, addr: usize,data: *mut u8, size: usize) -> std::result::Result<(),crate::traits::MemError> {
@@ -244,7 +255,23 @@ impl Mem for InModule {
     }
 
     unsafe fn virtual_alloc(&self, addr: usize, size: usize, prot: crate::structures::Protections) -> std::result::Result<crate::structures::VirtAlloc,crate::traits::MemError> {
-        todo!()
+        let alloc_ret = VirtualAlloc(
+            Some(addr as *mut c_void),
+            size,
+            MEM_COMMIT | MEM_RESERVE,
+            prot.native(),
+        );
+        if alloc_ret.is_null() {
+            Err(MemError::AllocFailure(size, addr))
+        } else {
+            Ok(VirtAlloc {
+                pid: 0,
+                addr,
+                size,
+                intrn:true
+            })
+        }
+
     }
 }
 impl SigScan for InModule {}

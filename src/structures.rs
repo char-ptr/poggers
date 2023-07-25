@@ -1,4 +1,5 @@
 /// Memory Protection Flags
+#[derive(Debug)]
 pub enum Protections {
     /// If memory can execute in this page ?
     Execute,
@@ -23,8 +24,9 @@ pub enum Protections {
     /// invalid protection
     INVALID,
 }
-use std::ffi::c_void;
+use std::{ffi::c_void, fmt::{Display, Debug}};
 
+use windows::Win32::System::Memory::VirtualFree;
 #[cfg(windows)]
 use windows::Win32::System::Memory::{PAGE_PROTECTION_FLAGS,VirtualFreeEx, MEM_RELEASE};
 
@@ -74,12 +76,29 @@ impl From<Protections> for u32 {
         val.u32()
     }
 }
-
+impl Display for Protections {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match *self {
+            Protections::Execute => write!(f, "Execute"),
+            Protections::ExecuteRead => write!(f, "ExecuteRead"),
+            Protections::ExecuteReadWrite => write!(f, "ExecuteReadWrite"),
+            Protections::ExecuteWriteCopy => write!(f, "ExecuteWriteCopy"),
+            Protections::NoAccess => write!(f, "NoAccess"),
+            Protections::ReadOnly => write!(f, "ReadOnly"),
+            Protections::ReadWrite => write!(f, "ReadWrite"),
+            Protections::WriteCopy => write!(f, "WriteCopy"),
+            Protections::TargetInvalid => write!(f, "TargetInvalid"),
+            Protections::TargerNoUpdate => write!(f, "TargerNoUpdate"),
+            Protections::INVALID => write!(f, "INVALID"),
+        } 
+    }
+}
 /// Allocted memory
 pub struct VirtAlloc {
     pub(crate) pid: u32,
     pub(crate) addr: usize,
     pub(crate) size: usize,
+    pub(crate) intrn : bool,
 }
 
 impl VirtAlloc {
@@ -92,12 +111,19 @@ impl VirtAlloc {
     fn intrl_free(&self) {
         use crate::external::process::ExProcess;
 
-        let Ok(proc) = ExProcess::new_from_pid(self.pid) else {
-            return;
-        };
+        if !self.intrn {
+            let Ok(proc) = ExProcess::new_from_pid(self.pid) else {
+                return;
+            };
 
-        unsafe {
-            VirtualFreeEx(proc.handl, self.addr as *mut c_void, self.size, MEM_RELEASE);
+            unsafe {
+                VirtualFreeEx(proc.handl, self.addr as *mut c_void, self.size, MEM_RELEASE);
+            }
+        } else {
+            unsafe {
+
+                VirtualFree(self.addr as *mut c_void, self.size, MEM_RELEASE);
+            }
         }
     }
 
