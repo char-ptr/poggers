@@ -252,18 +252,6 @@ pub enum ProcessError {
     /// process cannot be found with name
     #[error("unable to find any process with pid or name of '{0}'")]
     NoProcessFound(StringOru32),
-    /// unable to read memory from the process
-    #[error("unable to read memory @ {0:X}")]
-    UnableToReadMemory(usize),
-    /// unable to write memory to the process
-    #[error("unable to write memory @ {0:X}")]
-    UnableToWriteMemory(usize),
-    /// unable to change the protection of the memory
-    #[error("unable to change memory protection @ {0:X}")]
-    UnableToChangeProtection(usize),
-    /// unable to allocate memory
-    #[error("unable to allocate memory of size {0} to {1:X}")]
-    UnableToAllocate(usize, usize),
     /// tool snapshot error
     #[error("tool snapshot error: {0}")]
     ToolSnapshotError(#[from] SnapshotToolError),

@@ -23,7 +23,7 @@ pub fn read_sized(addr:usize, size:usize) -> Result<Vec<u8>,InternalError> {
     let mut buffer = vec![0; size];
     let ptr = addr as *const u8;
     if ptr.is_null() {
-        return Err(InternalError::InvalidPointer(addr).into())
+        return Err(InternalError::InvalidPointer(addr))
     }
 
     unsafe {

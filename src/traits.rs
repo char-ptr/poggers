@@ -8,8 +8,6 @@ use super::structures::Protections;
 
 /// trait which gives cross platform memory reading/writing etc.
 pub trait Mem {
-    /// The size of a page.
-    const PAGE_SIZE: usize = 0x1000;
     /// Read <T> from memory at address <addr>
     /// This function is cross-platform.
     /// ```rs
@@ -78,9 +76,9 @@ pub trait Mem {
     /// # Safety
     /// this should never panic even if you provide invalid addresses
 
-    unsafe fn fetch_page(&self, addr: usize) -> Result<[u8; Self::PAGE_SIZE],MemError> {
-        let mut data: [u8; Self::PAGE_SIZE] = [0; Self::PAGE_SIZE];
-        self.raw_read(addr, data.as_mut_ptr(), Self::PAGE_SIZE)?;
+    unsafe fn fetch_page(&self, addr: usize) -> Result<[u8; 0x1000],MemError> {
+        let mut data: [u8; 0x1000] = [0; 0x1000];
+        self.raw_read(addr, data.as_mut_ptr(), 0x1000)?;
         Ok(data)
     }
 

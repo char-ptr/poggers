@@ -36,7 +36,7 @@
 
 
 #![warn(missing_docs)]
-#![feature(generic_const_exprs)]
+// #![feature(generic_const_exprs)]
 /// exports primarily for [`poggers-derive`]
 pub mod exports;
 
