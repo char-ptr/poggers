@@ -18,6 +18,30 @@ use crate::{sigscan::SigScan, traits::Mem};
 use anyhow::Result;
 use thiserror::Error;
 
+
+/// a util to read `size` bytes from current process memory
+pub fn read_sized(addr:usize, size:usize) -> Result<Vec<u8>> {
+    let mut buffer = vec![0; size];
+    let ptr = addr as *const u8;
+    if ptr.is_null() {
+        return Err(InternalError::InvalidPointer(addr).into())
+    }
+
+    unsafe {
+        ptr.copy_to_nonoverlapping(buffer.as_mut_ptr(), size);
+    }
+
+    Ok(buffer)
+}
+
+/// Errors which may occur when reading/writing memory
+#[derive(Debug, Error)]
+pub enum InternalError {
+    /// The pointer {0} is invalid
+    #[error("'{0:X}' points to either an invalid address, or a null value")]
+    InvalidPointer(usize),
+}
+
 /// A module in a process.
 #[derive(Debug)]
 pub struct InModule {
@@ -138,7 +162,7 @@ impl InModule {
                 continue;
             }
 
-            let page = super::super::utils::read_sized(addr, mem_info.RegionSize - 1).ok()?;
+            let page = read_sized(addr, mem_info.RegionSize - 1).ok()?;
 
             let scan_res = self.scan(pattern, page.iter());
 
@@ -206,28 +230,21 @@ pub enum InModuleError {
 }
 
 impl Mem for InModule {
-    unsafe fn alter_protection(
-        &self,
-        _addr: usize,
-        _size: usize,
-        _prot: crate::structures::Protections,
-    ) -> Result<crate::structures::Protections> {
+    unsafe fn alter_protection(&self,addr:usize, size: usize, prot: crate::structures::Protections) -> std::result::Result<crate::structures::Protections,crate::traits::MemError> {
         todo!()
     }
-    unsafe fn raw_read(&self, addr: usize, data: *mut u8, size: usize) -> Result<()> {
+
+    unsafe fn raw_read(&self, addr: usize,data: *mut u8, size: usize) -> std::result::Result<(),crate::traits::MemError> {
         (addr as *mut u8).copy_to_nonoverlapping(data, size);
         Ok(())
     }
-    unsafe fn raw_write(&self, addr: usize, data: *const u8, size: usize) -> Result<()> {
+
+    unsafe fn raw_write(&self, addr: usize,data: *const u8, size: usize) -> std::result::Result<(),crate::traits::MemError> {
         (addr as *mut u8).copy_from_nonoverlapping(data, size);
         Ok(())
     }
-    unsafe fn virtual_alloc(
-        &self,
-        _addr: usize,
-        _size: usize,
-        _prot: crate::structures::Protections,
-    ) -> Result<crate::structures::VirtAlloc> {
+
+    unsafe fn virtual_alloc(&self, addr: usize, size: usize, prot: crate::structures::Protections) -> std::result::Result<crate::structures::VirtAlloc,crate::traits::MemError> {
         todo!()
     }
 }

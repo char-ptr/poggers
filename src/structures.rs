@@ -86,6 +86,8 @@ impl VirtAlloc {
     #[cfg(windows)]
     /// Free the allocated memory
     pub fn free(self) {
+        use crate::external::process::ExProcess;
+
         let Ok(proc) = ExProcess::new_from_pid(self.pid) else {
             return;
         };
@@ -109,6 +111,8 @@ impl VirtAlloc {
 impl Drop for VirtAlloc {
     #[cfg(windows)]
     fn drop(&mut self) {
+        use crate::external::process::ExProcess;
+
         let Ok(proc) = ExProcess::new_from_pid(self.pid) else {
             return;
         };

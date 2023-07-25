@@ -17,7 +17,7 @@ pub trait Mem {
     /// ```
     /// # Safety
     /// this should never panic even if you provide invalid addresses
-    unsafe fn read<T>(&self, addr: usize) -> Result<T> {
+    unsafe fn read<T>(&self, addr: usize) -> Result<T,MemError> {
         let mut data: T = std::mem::zeroed();
         // if Self::READ_REQUIRE_PROTECTION {
         //     let old = self.alter_protection(addr, std::mem::size_of::<T>(), Protections::ExecuteReadWrite)?;
@@ -107,14 +107,20 @@ pub trait Mem {
 
 }
 
+
+/// Mem-trait Failures
 #[derive(Debug,Error)]
 pub enum MemError {
-    #[error("Read failed")]
-    ReadFailure,
-    #[error("Write failed")]
-    WriteFailure,
-    #[error("VirtualAlloc failed")]
-    ProtectFailure,
-    #[error("VirtualAlloc failed")]
-    AllocFailure,
+    /// Read failed
+    #[error("Read failed [{0:X}]")]
+    ReadFailure(usize),
+    /// Write failed
+    #[error("Write failed [{0:X}]")]
+    WriteFailure(usize),
+    /// Protection update failed
+    #[error("Protection update failed [{0:X}]")]
+    ProtectFailure(usize),
+    /// Unable to allocate memory
+    #[error("VirtualAlloc failed [{0:X}]+{1:X}")]
+    AllocFailure(usize, usize),
 }

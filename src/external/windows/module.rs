@@ -6,7 +6,7 @@ use windows::Win32::{
 };
 
 use super::process::ExProcess;
-use crate::sigscan::SigScan;
+use crate::{sigscan::SigScan, traits::MemError};
 use crate::structures::Protections;
 use crate::traits::Mem;
 use anyhow::Result;
@@ -197,13 +197,13 @@ impl<'a> Mem for ExModule<'a> {
         addr: usize,
         size: usize,
         prot: Protections,
-    ) -> Result<Protections> {
+    ) -> Result<Protections, MemError> {
         self.process.alter_protection(addr, size, prot)
     }
-    unsafe fn raw_read(&self, addr: usize, data: *mut u8, size: usize) -> Result<()> {
+    unsafe fn raw_read(&self, addr: usize, data: *mut u8, size: usize) -> Result<(),MemError> {
         self.process.raw_read(addr, data, size)
     }
-    unsafe fn raw_write(&self, addr: usize, data: *const u8, size: usize) -> Result<()> {
+    unsafe fn raw_write(&self, addr: usize, data: *const u8, size: usize) -> Result<(),MemError> {
         self.process.raw_write(addr, data, size)
     }
     unsafe fn virtual_alloc(
@@ -211,7 +211,7 @@ impl<'a> Mem for ExModule<'a> {
         addr: usize,
         size: usize,
         prot: Protections,
-    ) -> Result<crate::structures::VirtAlloc> {
+    ) -> Result<crate::structures::VirtAlloc, MemError> {
         self.process.virtual_alloc(addr, size, prot)
     }
 }

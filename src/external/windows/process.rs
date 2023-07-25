@@ -12,7 +12,7 @@ use windows::Win32::{
     },
 };
 
-use crate::structures::{Protections, VirtAlloc};
+use crate::{structures::{Protections, VirtAlloc}, traits::MemError};
 use crate::traits::Mem;
 
 use super::{
@@ -147,7 +147,7 @@ impl Mem for ExProcess {
         addr: usize,
         size: usize,
         prot: Protections,
-    ) -> Result<Protections> {
+    ) -> Result<Protections, MemError> {
         let mut old_protect = Default::default();
         let res = unsafe {
             VirtualProtectEx(
@@ -167,10 +167,10 @@ impl Mem for ExProcess {
                     println!("Error: {:?}", e);
                 }
             }
-            Err(ProcessError::UnableToChangeProtection(addr).into())
+            Err(MemError::ProtectFailure(addr))
         }
     }
-    unsafe fn raw_read(&self, addr: usize, data: *mut u8, size: usize) -> Result<()> {
+    unsafe fn raw_read(&self, addr: usize, data: *mut u8, size: usize) -> Result<(), MemError> {
         let res = ReadProcessMemory(
             self.handl,
             addr as *const c_void,
@@ -182,10 +182,10 @@ impl Mem for ExProcess {
         if res.as_bool() {
             Ok(())
         } else {
-            Err(ProcessError::UnableToReadMemory(addr).into())
+            Err(MemError::ReadFailure(addr))
         }
     }
-    unsafe fn raw_write(&self, addr: usize, data: *const u8, size: usize) -> Result<()> {
+    unsafe fn raw_write(&self, addr: usize, data: *const u8, size: usize) -> Result<(), MemError> {
         let res = WriteProcessMemory(
             self.handl,
             addr as *const c_void,
@@ -196,7 +196,7 @@ impl Mem for ExProcess {
         if res.as_bool() {
             Ok(())
         } else {
-            Err(ProcessError::UnableToWriteMemory(addr).into())
+            Err(MemError::WriteFailure(addr))
         }
     }
     unsafe fn virtual_alloc(
@@ -204,7 +204,7 @@ impl Mem for ExProcess {
         addr: usize,
         size: usize,
         prot: Protections,
-    ) -> Result<crate::structures::VirtAlloc> {
+    ) -> Result<crate::structures::VirtAlloc, MemError> {
         let alloc_ret = VirtualAllocEx(
             self.handl,
             Some(addr as *mut c_void),
@@ -213,7 +213,7 @@ impl Mem for ExProcess {
             prot.native(),
         );
         if alloc_ret.is_null() {
-            Err(ProcessError::UnableToAllocate(size, addr).into())
+            Err(MemError::AllocFailure(size, addr))
         } else {
             Ok(VirtAlloc {
                 pid: self.pid,
