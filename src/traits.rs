@@ -17,7 +17,7 @@ pub trait Mem {
     /// ```
     /// # Safety
     /// this should never panic even if you provide invalid addresses
-    unsafe fn read<T>(&self, addr: usize) -> Result<T,MemError> {
+    unsafe fn read<T>(&self, addr: usize) -> Result<T> {
         let mut data: T = std::mem::zeroed();
         // if Self::READ_REQUIRE_PROTECTION {
         //     let old = self.alter_protection(addr, std::mem::size_of::<T>(), Protections::ExecuteReadWrite)?;

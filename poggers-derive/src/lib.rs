@@ -3,8 +3,7 @@ use proc_macro2::Span;
 use proc_macro_crate::crate_name;
 // use proc_macro2::TokenStream;
 use quote::{quote, ToTokens};
-use syn::{parse_macro_input, ItemFn, Ident, parse::Parse, punctuated::Punctuated, Token};
-
+use syn::{parse::Parse, parse_macro_input, punctuated::Punctuated, Ident, ItemFn, Token};
 
 struct CreateEntryArguments {
     no_console: bool,
@@ -25,7 +24,6 @@ impl Parse for CreateEntryArguments {
                     no_thread = true;
                 }
                 _ => {}
-                
             }
         }
         Ok(CreateEntryArguments {
@@ -35,24 +33,22 @@ impl Parse for CreateEntryArguments {
     }
 }
 
-
 /// This macro allows you to define a function which will be called upon dll injection
 /// ## Notes
 /// On windows, this will automatically allocate a console, if you don't wan't do do that, use the `no_console` attribute
 #[proc_macro_attribute]
-pub fn create_entry(attr:TokenStream, item:TokenStream) -> TokenStream {
+pub fn create_entry(attr: TokenStream, item: TokenStream) -> TokenStream {
     let input = parse_macro_input!(item as ItemFn);
     let inputb = input.clone();
     let arg = parse_macro_input!(attr as CreateEntryArguments);
     let input_name = input.sig.ident;
-
 
     let curr_crate = match crate_name("poggers").expect("poggers-derive to be found") {
         proc_macro_crate::FoundCrate::Itself => quote!(crate),
         proc_macro_crate::FoundCrate::Name(x) => {
             let i = Ident::new(&x, Span::call_site());
             quote!(#i)
-        },
+        }
     };
 
     let ret = input.sig.output;
@@ -61,7 +57,7 @@ pub fn create_entry(attr:TokenStream, item:TokenStream) -> TokenStream {
         syn::ReturnType::Default => quote!(),
         syn::ReturnType::Type(_, ty) => {
             if ty.to_token_stream().to_string().contains("Result") {
-                quote!{
+                quote! {
                     match r {
                         Ok(_) => (),
                         Err(e) => {
@@ -72,21 +68,29 @@ pub fn create_entry(attr:TokenStream, item:TokenStream) -> TokenStream {
             } else {
                 quote!()
             }
-        },
+        }
     };
 
-    let alloc_console = if arg.no_console {quote!{}} else {quote!{
-        unsafe {
-            #curr_crate::exports::AllocConsole();
-        };
-    }};
-    let free_console = if arg.no_console {quote!{}} else {quote!{
-        unsafe {
-            #curr_crate::exports::FreeConsole();
-        };
-    }};
+    let alloc_console = if arg.no_console {
+        quote! {}
+    } else {
+        quote! {
+            unsafe {
+                #curr_crate::exports::AllocConsole();
+            };
+        }
+    };
+    let free_console = if arg.no_console {
+        quote! {}
+    } else {
+        quote! {
+            unsafe {
+                #curr_crate::exports::FreeConsole();
+            };
+        }
+    };
 
-    let cross_platform = quote!{
+    let cross_platform = quote! {
         use ::std::panic;
 
         match panic::catch_unwind(||#input_name()) {
@@ -97,19 +101,23 @@ pub fn create_entry(attr:TokenStream, item:TokenStream) -> TokenStream {
         };
     };
 
-    let thread_spawn = if arg.no_thread {quote!{#alloc_console;#cross_platform;#free_console}} else {quote!{
-        std::thread::spawn(|| {
-            #alloc_console
-            #cross_platform
-            #free_console
-        });
-    }};
+    let thread_spawn = if arg.no_thread {
+        quote! {#alloc_console;#cross_platform;#free_console}
+    } else {
+        quote! {
+            std::thread::spawn(|| {
+                #alloc_console
+                #cross_platform
+                #free_console
+            });
+        }
+    };
 
     #[cfg(target_os = "windows")]
-    let generated = quote!{
+    let generated = quote! {
         #[no_mangle]
         extern "system" fn DllMain(
-            h_module : #curr_crate::exports::HINSTANCE,
+            h_module : #curr_crate::exports::HMODULE,
             reason : u32,
             _: *const ::std::ffi::c_void
         ) -> #curr_crate::exports::BOOL {
@@ -123,7 +131,7 @@ pub fn create_entry(attr:TokenStream, item:TokenStream) -> TokenStream {
         }
     };
     #[cfg(not(target_os = "windows"))]
-    let generated = quote!{
+    let generated = quote! {
         #[#curr_crate::exports::ctor]
         fn lib_init() {
             std::thread::spawn(|| {
@@ -134,8 +142,7 @@ pub fn create_entry(attr:TokenStream, item:TokenStream) -> TokenStream {
         }
     };
 
-
-    TokenStream::from(quote!{
+    TokenStream::from(quote! {
         #inputb
 
         #generated

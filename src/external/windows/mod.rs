@@ -1,9 +1,9 @@
-/// a wrapper around the platform specific version.
-pub mod process;
-/// a wrapper around the platform specific version.
-pub mod module;
 /// Create a snapshot of the processes or modules
 pub mod create_snapshot;
+/// a wrapper around the platform specific version.
+pub mod module;
+/// a wrapper around the platform specific version.
+pub mod process;
 
 #[cfg(test)]
 mod tests {
@@ -11,10 +11,10 @@ mod tests {
         io::{BufRead, BufReader},
         process::{Command, Stdio},
     };
-    
-    use crate::traits::Mem;
+
     use super::process::*;
-    
+    use crate::traits::Mem;
+
     #[test]
     fn read_name_search() {
         let proc = Command::new("./test-utils/rw-test.exe")
@@ -37,7 +37,7 @@ mod tests {
         );
 
         let offset = base_mod.base_address + 0x43000;
-        let read_val = unsafe {xproc.read::<u32>(offset).unwrap()};
+        let read_val = unsafe { xproc.read::<u32>(offset).unwrap() };
 
         assert_eq!(current_val.parse::<u32>().unwrap(), read_val);
     }
@@ -64,7 +64,7 @@ mod tests {
         );
 
         let offset = base_mod.base_address + 0x43000;
-        let read_val = unsafe {xproc.read::<u32>(offset).unwrap()};
+        let read_val = unsafe { xproc.read::<u32>(offset).unwrap() };
 
         assert_eq!(current_val.parse::<u32>().unwrap(), read_val);
     }
@@ -91,8 +91,11 @@ mod tests {
         );
 
         let offset = base_mod.base_address + 0x43000;
-        let read_offset = unsafe {base_mod.scan_virtual_value(&current_val_u32).unwrap()};
-        println!("read_offset = {:X} | predicted => {:X}", read_offset, offset);
+        let read_offset = unsafe { base_mod.scan_virtual_value(&current_val_u32).unwrap() };
+        println!(
+            "read_offset = {:X} | predicted => {:X}",
+            read_offset, offset
+        );
         // std::thread::sleep(std::time::Duration::from_secs(45));
         assert_eq!(read_offset, offset);
     }
@@ -120,11 +123,11 @@ mod tests {
 
         let offset = base_mod.base_address + 0x43000;
 
-        let read_val = unsafe {xproc.read::<u32>(offset).unwrap()};
+        let read_val = unsafe { xproc.read::<u32>(offset).unwrap() };
 
         assert_eq!(current_val.parse::<u32>().unwrap(), read_val);
 
-        unsafe {xproc.write(offset, &9832472u32).unwrap()};
+        unsafe { xproc.write(offset, &9832472u32).unwrap() };
 
         let current_val = lines.next().unwrap().unwrap();
 
@@ -152,7 +155,7 @@ mod tests {
             base_mod.base_address
         );
 
-        let offset = unsafe {base_mod.scan_virtual("F3 48 0F 2A C0").unwrap()};
+        let offset = unsafe { base_mod.scan_virtual("F3 48 0F 2A C0").unwrap() };
         println!("found @ offset = {:X}", offset);
     }
 }
