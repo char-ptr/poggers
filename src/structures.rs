@@ -26,10 +26,8 @@ pub enum Protections {
 use std::ffi::c_void;
 
 #[cfg(windows)]
-use windows::Win32::System::Memory::PAGE_PROTECTION_FLAGS;
-use windows::Win32::System::Memory::{VirtualFreeEx, MEM_RELEASE};
+use windows::Win32::System::Memory::{PAGE_PROTECTION_FLAGS,VirtualFreeEx, MEM_RELEASE};
 
-use crate::external::process::ExProcess;
 #[cfg(windows)]
 impl Protections {
     /// convert into u32
@@ -107,7 +105,7 @@ impl VirtAlloc {
         self.size
     }
 }
-
+#[cfg(windows)]
 impl Drop for VirtAlloc {
     #[cfg(windows)]
     fn drop(&mut self) {
