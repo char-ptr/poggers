@@ -1,3 +1,4 @@
+pub mod addr;
 /// a module in a process
 pub mod modules;
 /// protections for memory

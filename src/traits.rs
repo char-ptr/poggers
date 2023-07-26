@@ -1,7 +1,9 @@
 
+use std::rc::Rc;
+
 use thiserror::Error;
 
-use crate::structures::virtalloc::VirtAlloc;
+use crate::{structures::{virtalloc::VirtAlloc, addr::Address}, sigscan::SigScan};
 
 use super::structures::protections::Protections;
 
@@ -80,6 +82,10 @@ pub trait Mem {
         let mut data: [u8; 0x1000] = [0; 0x1000];
         self.raw_read(addr, data.as_mut_ptr(), 0x1000)?;
         Ok(data)
+    }
+    /// get a wrapper around an address
+    fn address(&self, size: usize) -> Address<Self> where Self : Sized + SigScan + Clone {
+        Address::new(Rc::new(self.clone()), size)
     }
     #[cfg(windows)]
     /// Query a page of memory at address <addr>
