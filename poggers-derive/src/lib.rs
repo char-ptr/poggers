@@ -48,6 +48,7 @@ pub fn create_entry(attr: TokenStream, item: TokenStream) -> TokenStream {
     let inputb = input.clone();
     let arg = parse_macro_input!(attr as CreateEntryArguments);
     let input_name = input.sig.ident;
+    let has_hmd = input.sig.inputs.len() > 0;
 
     let curr_crate = match crate_name("poggers").expect("poggers-derive to be found") {
         proc_macro_crate::FoundCrate::Itself => quote!(crate),
@@ -95,11 +96,19 @@ pub fn create_entry(attr: TokenStream, item: TokenStream) -> TokenStream {
             };
         }
     };
-
+    let call_main = if has_hmd {
+        quote! {
+            #input_name(h_module);
+        }
+    } else {
+        quote! {
+            #input_name();
+        }
+    };
     let cross_platform = quote! {
         use ::std::panic;
 
-        match panic::catch_unwind(||#input_name(h_module)) {
+        match panic::catch_unwind(move || #call_main) {
             Err(e) => {
                 println!("`{}` has panicked: {:#?}",stringify!{#input_name}, e);
             }
