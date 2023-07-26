@@ -99,7 +99,7 @@ pub fn create_entry(attr: TokenStream, item: TokenStream) -> TokenStream {
     let cross_platform = quote! {
         use ::std::panic;
 
-        match panic::catch_unwind(||#input_name()) {
+        match panic::catch_unwind(||#input_name(h_module)) {
             Err(e) => {
                 println!("`{}` has panicked: {:#?}",stringify!{#input_name}, e);
             }

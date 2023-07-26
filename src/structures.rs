@@ -24,8 +24,9 @@ pub enum Protections {
     /// invalid protection
     INVALID,
 }
-use std::{ffi::c_void, fmt::{Display, Debug}};
+use std::{fmt::{Display, Debug}};
 
+#[cfg(windows)]
 use windows::Win32::System::Memory::VirtualFree;
 #[cfg(windows)]
 use windows::Win32::System::Memory::{PAGE_PROTECTION_FLAGS,VirtualFreeEx, MEM_RELEASE};
@@ -107,9 +108,10 @@ impl VirtAlloc {
     pub fn free(self) {
         self.intrl_free();
     }
-    
+    #[cfg(windows)]
     fn intrl_free(&self) {
         use crate::external::process::ExProcess;
+        use std::ffi::c_void;
 
         if !self.intrn {
             let Ok(proc) = ExProcess::new_from_pid(self.pid) else {
