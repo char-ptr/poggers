@@ -42,3 +42,6 @@ ctor = {version = "0.2.4"}
 
 [target.'cfg(target_os="macos")'.dependencies]
 mach = {version = "0.3.2"}
+
+[dev-dependencies]
+poggers-derive = {path = "poggers-derive"}

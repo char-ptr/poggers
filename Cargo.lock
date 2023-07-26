@@ -75,6 +75,7 @@ dependencies = [
  "libc",
  "log",
  "mach",
+ "poggers-derive",
  "thiserror",
  "widestring",
  "windows",

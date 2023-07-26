@@ -98,11 +98,11 @@ pub fn create_entry(attr: TokenStream, item: TokenStream) -> TokenStream {
     };
     let call_main = if has_hmd {
         quote! {
-            #input_name(h_module);
+            #input_name(h_module)
         }
     } else {
         quote! {
-            #input_name();
+            #input_name()
         }
     };
     let cross_platform = quote! {
