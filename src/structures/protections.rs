@@ -24,12 +24,10 @@ pub enum Protections {
     /// invalid protection
     INVALID,
 }
-use std::{fmt::{Display, Debug}};
+use std::fmt::{Display, Debug};
 
 #[cfg(windows)]
-use windows::Win32::System::Memory::VirtualFree;
-#[cfg(windows)]
-use windows::Win32::System::Memory::{PAGE_PROTECTION_FLAGS,VirtualFreeEx, MEM_RELEASE};
+use windows::Win32::System::Memory::PAGE_PROTECTION_FLAGS;
 
 #[cfg(windows)]
 impl Protections {
@@ -92,57 +90,5 @@ impl Display for Protections {
             Protections::TargerNoUpdate => write!(f, "TargerNoUpdate"),
             Protections::INVALID => write!(f, "INVALID"),
         } 
-    }
-}
-/// Allocted memory
-pub struct VirtAlloc {
-    pub(crate) pid: u32,
-    pub(crate) addr: usize,
-    pub(crate) size: usize,
-    pub(crate) intrn : bool,
-}
-
-impl VirtAlloc {
-    #[cfg(windows)]
-    /// Free the allocated memory
-    pub fn free(self) {
-        self.intrl_free();
-    }
-    #[cfg(windows)]
-    fn intrl_free(&self) {
-        use crate::external::process::ExProcess;
-        use std::ffi::c_void;
-
-        if !self.intrn {
-            let Ok(proc) = ExProcess::new_from_pid(self.pid) else {
-                return;
-            };
-
-            unsafe {
-                VirtualFreeEx(proc.handl, self.addr as *mut c_void, self.size, MEM_RELEASE);
-            }
-        } else {
-            unsafe {
-
-                VirtualFree(self.addr as *mut c_void, self.size, MEM_RELEASE);
-            }
-        }
-    }
-
-    /// Get address of allocated memory
-    pub fn get_addr(&self) -> usize {
-        self.addr
-    }
-
-    /// Get size of allocated memory
-    pub fn get_size(&self) -> usize {
-        self.size
-    }
-}
-#[cfg(windows)]
-impl Drop for VirtAlloc {
-    #[cfg(windows)]
-    fn drop(&mut self) {
-        self.intrl_free();
     }
 }

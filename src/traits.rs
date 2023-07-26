@@ -1,9 +1,9 @@
 
 use thiserror::Error;
 
-use crate::structures::VirtAlloc;
+use crate::structures::virtalloc::VirtAlloc;
 
-use super::structures::Protections;
+use super::structures::protections::Protections;
 
 
 /// trait which gives cross platform memory reading/writing etc.
@@ -81,7 +81,11 @@ pub trait Mem {
         self.raw_read(addr, data.as_mut_ptr(), 0x1000)?;
         Ok(data)
     }
-
+    #[cfg(windows)]
+    /// Query a page of memory at address <addr>
+    /// # Safety
+    /// this should never panic even if you provide invalid addresses
+    unsafe fn raw_query(&self, addr : usize) -> windows::Win32::System::Memory::MEMORY_BASIC_INFORMATION;
     /// Alter the protection of a memory region, needs implementation per platform
     /// # Safety
     /// this should never panic even if you provide invalid addresses
@@ -101,10 +105,24 @@ pub trait Mem {
     /// # Safety
     /// this should never panic even if you provide invalid addresses
 
-    unsafe fn virtual_alloc(&self, addr: usize, size: usize, prot: Protections) -> Result<VirtAlloc,MemError>;
+    unsafe fn raw_virtual_alloc(&self, addr:usize, size:usize, prot: Protections) -> Result<(),MemError>;
+    /// Free memory at process beginning at <addr> with size <size>, needs implementation per platform
+    /// # Safety
+    /// this should never panic even if you provide invalid addresses
+    unsafe fn raw_virtual_free(&self, addr:usize, size:usize) -> Result<(),MemError>;
+    /// Allocate memory to process begninning at <addr> with size <size>, needs implementation per platform
+    /// # Safety
+    /// this should never panic even if you provide invalid addresses
+    unsafe fn virtual_alloc(&self, addr: usize, size: usize, prot: Protections) -> Result<VirtAlloc<Self>,MemError> where Self: Sized {
+        self.raw_virtual_alloc(addr, size, prot)?;
+        Ok(VirtAlloc {
+            addr,
+            size,
+            proc: self
+        })
+    }
 
 }
-
 
 /// Mem-trait Failures
 #[derive(Debug,Error)]
@@ -121,4 +139,7 @@ pub enum MemError {
     /// Unable to allocate memory
     #[error("VirtualAlloc failed [{0:X}]+{1:X}")]
     AllocFailure(usize, usize),
+    /// Failed to free memory
+    #[error("VirtualFree failed [{0:X}]+{1:X}")]
+    FreeFailure(usize, usize),
 }

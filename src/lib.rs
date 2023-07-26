@@ -45,8 +45,9 @@ pub mod traits;
 /// Holder of the [`SigScan`] trait
 pub mod sigscan;
 /// For all external related things.
-pub mod external;
-/// For all internal related things.
-pub mod internal;
+// pub mod external;
+// /// For all internal related things.
+// pub mod internal;
 /// Structures which may be used cross platform.
 pub mod structures;
+// struct Temp;
