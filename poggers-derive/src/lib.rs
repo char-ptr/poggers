@@ -120,7 +120,7 @@ pub fn create_entry(attr: TokenStream, item: TokenStream) -> TokenStream {
         quote! {#alloc_console;#cross_platform;#free_console}
     } else {
         quote! {
-            std::thread::spawn(|| {
+            std::thread::spawn(move || {
                 #alloc_console
                 #cross_platform
                 #free_console
