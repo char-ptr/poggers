@@ -2,7 +2,7 @@ use std::{ffi::c_void, mem::size_of, rc::Rc};
 
 use windows::{Win32::{System::{Threading::{GetCurrentProcess, GetCurrentProcessId}, ProcessStatus::{GetProcessImageFileNameW, MODULEINFO, GetModuleInformation}, Memory::{VirtualAlloc, MEM_RESERVE, MEM_COMMIT, VirtualFree, MEM_RELEASE, VirtualProtect, PAGE_PROTECTION_FLAGS, MEMORY_BASIC_INFORMATION, VirtualQuery}, LibraryLoader::GetModuleHandleW}, Foundation::HANDLE}, core::PCWSTR};
 
-use crate::{structures::{process::{Process, Internal}, protections::Protections, modules::{Module, ModuleError}}, traits::{Mem, MemError}, sigscan::SigScan};
+use crate::{structures::{process::{Process, Internal, ProcessBasics}, protections::Protections, modules::{Module, ModuleError}}, traits::{Mem, MemError}, sigscan::SigScan};
 
 use super::utils::ProcessUtils;
 

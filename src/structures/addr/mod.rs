@@ -8,6 +8,7 @@ pub struct Address<T: SigScan> {
     pub(crate) owner : Rc< T >
 }
 impl <T: SigScan> Address<T> {
+    /// create a wrapper around this address <at> in <owner>
     pub fn new(owner: Rc<T>, at: usize) -> Self {
         Self {
             at,

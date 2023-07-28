@@ -16,7 +16,7 @@ pub trait Mem {
     /// let data: u32 = process.read::<u32>(0x12345678)?;
     /// ```
     /// # Safety
-    /// this should never panic even if you provide invalid addresses
+    /// unsafe because it does direct calls to the OS. the address supplied could be invalid.
     unsafe fn read<T>(&self, addr: usize) -> Result<T,MemError> {
         let mut data: T = std::mem::zeroed();
         // if Self::READ_REQUIRE_PROTECTION {
@@ -32,7 +32,7 @@ pub trait Mem {
     }
     /// Read raw bytes from memory at address <addr> with size <size>
     /// # Safety
-    /// this should never panic even if you provide invalid addresses
+    /// unsafe because it does direct calls to the OS. the address supplied could be invalid.
 
     unsafe fn read_sized(&self, addr: usize,size:usize) -> Result<Vec<u8>,MemError> {
         let mut data: Vec<u8> = vec![0;size];
@@ -45,7 +45,7 @@ pub trait Mem {
     }    
     /// Write <T> to memory at address <addr>
     /// # Safety
-    /// this should never panic even if you provide invalid addresses
+    /// unsafe because it does direct calls to the OS. the address supplied could be invalid.
 
     unsafe fn write<T>(&self, addr: usize, data: &T) -> Result<(),MemError> {
         // if Self::WRITE_REQUIRE_PROTECTION {
@@ -60,7 +60,7 @@ pub trait Mem {
     }
     /// Write raw bytes to memory at address <addr>
     /// # Safety
-    /// this should never panic even if you provide invalid addresses
+    /// unsafe because it does direct calls to the OS. the address supplied could be invalid.
 
     unsafe fn write_raw(&self, addr: usize, data: &[u8]) -> Result<(),MemError> {
         
@@ -76,7 +76,7 @@ pub trait Mem {
     }
     /// Fetch a page of memory at address <addr>
     /// # Safety
-    /// this should never panic even if you provide invalid addresses
+    /// unsafe because it does direct calls to the OS. the address supplied could be invalid.
 
     unsafe fn fetch_page(&self, addr: usize) -> Result<[u8; 0x1000],MemError> {
         let mut data: [u8; 0x1000] = [0; 0x1000];
@@ -88,8 +88,11 @@ pub trait Mem {
         Address::new(Rc::new(self.clone()), size)
     }
     /// Allocate memory to process begninning at <addr> with size <size>, needs implementation per platform
+    /// This will automatically free the memory when the VirtAlloc is dropped
+    /// To prevent this from happening use forget.
     /// # Safety
-    /// this should never panic even if you provide invalid addresses
+    /// unsafe because it does direct calls to the OS. the address supplied could be invalid.
+    #[must_use = "keep the virtalloc alive to keep the memory allocated"]
     unsafe fn virtual_alloc(&self, addr: Option<usize>, size: usize, prot: Protections) -> Result<VirtAlloc<Self>,MemError> where Self: Sized {
         let addr = self.raw_virtual_alloc(addr, size, prot)?;
         Ok(VirtAlloc {
@@ -101,31 +104,31 @@ pub trait Mem {
     #[cfg(windows)]
     /// Query a page of memory at address <addr>
     /// # Safety
-    /// this should never panic even if you provide invalid addresses
+    /// unsafe because it does direct calls to the OS. the address supplied could be invalid.
     unsafe fn raw_query(&self, addr : usize) -> windows::Win32::System::Memory::MEMORY_BASIC_INFORMATION;
     /// Alter the protection of a memory region, needs implementation per platform
     /// # Safety
-    /// this should never panic even if you provide invalid addresses
+    /// unsafe because it does direct calls to the OS. the address supplied could be invalid.
 
     unsafe fn alter_protection(&self,addr:usize, size: usize, prot: Protections) -> Result<Protections,MemError>;
     /// Read raw bytes from memory at address <addr> with size <size>, needs implementation per platform
     /// # Safety
-    /// this should never panic even if you provide invalid addresses
+    /// unsafe because it does direct calls to the OS. the address supplied could be invalid.
 
     unsafe fn raw_read(&self, addr: usize,data: *mut u8, size: usize) -> Result<(),MemError>;
     /// Write raw bytes to memory at address <addr> with size <size>, needs implementation per platform
     /// # Safety
-    /// this should never panic even if you provide invalid addresses
+    /// unsafe because it does direct calls to the OS. the address supplied could be invalid.
 
     unsafe fn raw_write(&self, addr: usize,data: *const u8, size: usize) -> Result<(),MemError>;
     /// Allocate memory to process begninning at <addr> with size <size>, needs implementation per platform
     /// # Safety
-    /// this should never panic even if you provide invalid addresses
+    /// unsafe because it does direct calls to the OS. the address supplied could be invalid.
 
     unsafe fn raw_virtual_alloc(&self, addr:Option<usize>, size:usize, prot: Protections) -> Result<usize,MemError>;
     /// Free memory at process beginning at <addr> with size <size>, needs implementation per platform
     /// # Safety
-    /// this should never panic even if you provide invalid addresses
+    /// unsafe because it does direct calls to the OS. the address supplied could be invalid.
     unsafe fn raw_virtual_free(&self, addr:usize, size:usize) -> Result<(),MemError>;
 
 }

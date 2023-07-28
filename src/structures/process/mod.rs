@@ -20,22 +20,34 @@ pub struct Process<T=Holding> {
     pub(crate) handl: Option<isize>,
     pub(crate) mrk: PhantomData<T>
 }
+
 #[cfg(windows)]
 use windows::Win32::Foundation::HANDLE;
-
-impl<T> Process<T> {
+/// base process functions
+pub trait ProcessBasics {
     /// get the process id
-    pub fn get_pid(&self) -> u32 {
+    fn get_pid(&self) -> u32;
+    /// get the process name
+    fn get_name(&self) -> &String;
+    #[cfg(windows)]
+    /// get the process handle [WINDOWS ONLY]
+    fn get_handle(&self) -> HANDLE;
+}
+
+
+impl<T> ProcessBasics for  Process<T> {
+    /// get the process id
+    fn get_pid(&self) -> u32 {
         self.pid
     }
     /// get the process name
-    pub fn get_name(&self) -> &String {
+    fn get_name(&self) -> &String {
         &self.name
     }
     /// get the process handle
     /// WINDOWS ONLY
     #[cfg(windows)]
-    pub fn get_handle(&self) -> HANDLE {
+    fn get_handle(&self) -> HANDLE {
         HANDLE(self.handl.unwrap())
     }
 } 

@@ -2,7 +2,7 @@ use std::{ffi::c_void, rc::Rc, mem::size_of};
 
 use windows::Win32::{System::{Diagnostics::Debug::{WriteProcessMemory, ReadProcessMemory}, Memory::{VirtualProtectEx, VirtualAllocEx, MEM_COMMIT, MEM_RESERVE, VirtualFreeEx, MEM_RELEASE, VirtualQueryEx, MEMORY_BASIC_INFORMATION}, Threading::{OpenProcess, PROCESS_ALL_ACCESS}, ProcessStatus::GetModuleFileNameExW}, Foundation::{GetLastError, HANDLE}};
 
-use crate::{traits::{Mem, MemError}, structures::{process::{Process, External, ProcessError, U32OrString}, protections::Protections, create_snapshot::ToolSnapshot, modules::{Module, ModuleError}}, sigscan::SigScan};
+use crate::{traits::{Mem, MemError}, structures::{process::{Process, External, ProcessError, U32OrString, ProcessBasics}, protections::Protections, create_snapshot::ToolSnapshot, modules::{Module, ModuleError}}, sigscan::SigScan};
 
 use super::utils::ProcessUtils;
 
