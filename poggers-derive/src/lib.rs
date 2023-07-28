@@ -40,15 +40,17 @@ impl Parse for CreateEntryArguments {
 }
 
 /// This macro allows you to define a function which will be called upon dll injection
+/// you can get the HMODULE of this dll by simply having a parameter of type `HMODULE`
 /// ## Notes
-/// On windows, this will automatically allocate a console, if you don't wan't do do that, use the `no_console` attribute
+/// On windows, this will automatically allocate a console, if you don't want to do that, use the `no_console` attribute
+/// On windows, this will automatically free the console upon dll unload, if you don't want to do that, use the `no_free` attribute
 #[proc_macro_attribute]
 pub fn create_entry(attr: TokenStream, item: TokenStream) -> TokenStream {
     let input = parse_macro_input!(item as ItemFn);
     let inputb = input.clone();
     let arg = parse_macro_input!(attr as CreateEntryArguments);
     let input_name = input.sig.ident;
-    let has_hmd = input.sig.inputs.len() > 0;
+    let has_hmd = !input.sig.inputs.is_empty();
 
     let curr_crate = match crate_name("poggers").expect("poggers-derive to be found") {
         proc_macro_crate::FoundCrate::Itself => quote!(crate),
