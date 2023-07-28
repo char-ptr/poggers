@@ -87,6 +87,17 @@ pub trait Mem {
     fn address(&self, size: usize) -> Address<Self> where Self : Sized + SigScan + Clone {
         Address::new(Rc::new(self.clone()), size)
     }
+    /// Allocate memory to process begninning at <addr> with size <size>, needs implementation per platform
+    /// # Safety
+    /// this should never panic even if you provide invalid addresses
+    unsafe fn virtual_alloc(&self, addr: Option<usize>, size: usize, prot: Protections) -> Result<VirtAlloc<Self>,MemError> where Self: Sized {
+        let addr = self.raw_virtual_alloc(addr, size, prot)?;
+        Ok(VirtAlloc {
+            addr,
+            size,
+            proc: self
+        })
+    }
     #[cfg(windows)]
     /// Query a page of memory at address <addr>
     /// # Safety
@@ -111,22 +122,11 @@ pub trait Mem {
     /// # Safety
     /// this should never panic even if you provide invalid addresses
 
-    unsafe fn raw_virtual_alloc(&self, addr:usize, size:usize, prot: Protections) -> Result<(),MemError>;
+    unsafe fn raw_virtual_alloc(&self, addr:Option<usize>, size:usize, prot: Protections) -> Result<usize,MemError>;
     /// Free memory at process beginning at <addr> with size <size>, needs implementation per platform
     /// # Safety
     /// this should never panic even if you provide invalid addresses
     unsafe fn raw_virtual_free(&self, addr:usize, size:usize) -> Result<(),MemError>;
-    /// Allocate memory to process begninning at <addr> with size <size>, needs implementation per platform
-    /// # Safety
-    /// this should never panic even if you provide invalid addresses
-    unsafe fn virtual_alloc(&self, addr: usize, size: usize, prot: Protections) -> Result<VirtAlloc<Self>,MemError> where Self: Sized {
-        self.raw_virtual_alloc(addr, size, prot)?;
-        Ok(VirtAlloc {
-            addr,
-            size,
-            proc: self
-        })
-    }
 
 }
 
@@ -143,8 +143,8 @@ pub enum MemError {
     #[error("Protection update to {1} failed [{0:X}]+{1:X}")]
     ProtectFailure(usize,usize, Protections),
     /// Unable to allocate memory
-    #[error("VirtualAlloc failed [{0:X}]+{1:X}")]
-    AllocFailure(usize, usize),
+    #[error("VirtualAlloc failed [{0:X?}]+{1:X}")]
+    AllocFailure(Option<usize>, usize),
     /// Failed to free memory
     #[error("VirtualFree failed [{0:X}]+{1:X}")]
     FreeFailure(usize, usize),

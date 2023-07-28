@@ -64,18 +64,18 @@ impl Mem for Process<External> {
         }
     }
     #[must_use = "keep the virtalloc alive to keep the memory allocated"]
-    unsafe fn raw_virtual_alloc(&self, addr: usize, size: usize, prot: Protections) -> Result<(),MemError> {
+    unsafe fn raw_virtual_alloc(&self, addr: Option<usize>, size: usize, prot: Protections) -> Result<usize,MemError> {
         let alloc_ret = VirtualAllocEx(
             self.get_handle(),
-            Some(addr as *mut c_void),
+            addr.map(|x| x as *const c_void),
             size,
             MEM_COMMIT | MEM_RESERVE,
             prot.native(),
         );
         if alloc_ret.is_null() {
-            Err(MemError::AllocFailure(size, addr))
+            Err(MemError::AllocFailure(addr, size))
         } else {
-            Ok(())
+            Ok(alloc_ret as usize)
         }
     }
     unsafe fn raw_virtual_free(&self, addr:usize, size:usize) -> Result<(),MemError> {
