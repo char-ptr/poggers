@@ -176,3 +176,84 @@ impl TryFrom<&str> for Process<External> {
     }
 }
 impl SigScan for Process<External> {}
+
+
+#[cfg(test)]
+mod test {
+    fn spawn_test_process() -> std::process::Child{
+        use std::process::Command;
+        let proc = Command::new("./target/release/rw-test.exe").stdout(Stdio::null()).stdout(Stdio::piped()).spawn().unwrap();
+        proc
+    }
+    use std::{process::Stdio, io::{BufReader, BufRead}};
+
+    use super::*;
+    #[test]
+    fn test_reading() {
+        let mut proc = spawn_test_process();
+        let mut reader = BufReader::new(proc.stdout.take().unwrap());
+        let mut bufr = String::new();
+        let ex = Process::find_from_pid(proc.id()).unwrap();
+        
+        reader.read_line(&mut bufr).ok();
+
+        let addr = usize::from_str_radix(bufr.trim_start_matches("0x").trim(), 16).unwrap();
+
+        let val = unsafe { ex.read::<u32>(addr).unwrap() };
+
+        bufr.clear();
+
+        reader.read_line(&mut bufr).ok();
+        
+        assert_eq!(val, bufr.trim().parse().unwrap());
+
+
+        proc.kill().unwrap();
+    }
+    #[test]
+    fn test_name_lookup() {
+        let mut proc = spawn_test_process();
+        let mut reader = BufReader::new(proc.stdout.take().unwrap());
+        let mut bufr = String::new();
+        let ex = Process::find_by_name("rw-test.exe").unwrap();
+        
+        reader.read_line(&mut bufr).ok();
+
+        let addr = usize::from_str_radix(bufr.trim_start_matches("0x").trim(), 16).unwrap();
+
+        let val = unsafe { ex.read::<u32>(addr).unwrap() };
+
+        bufr.clear();
+
+        reader.read_line(&mut bufr).ok();
+        
+        assert_eq!(val, bufr.trim().parse().unwrap());
+
+
+        proc.kill().unwrap();
+    }
+    #[test]
+    fn test_writing() {
+        let mut proc = spawn_test_process();
+        let mut reader = BufReader::new(proc.stdout.take().unwrap());
+        let mut bufr = String::new();
+        let ex = Process::find_from_pid(proc.id()).unwrap();
+        
+        reader.read_line(&mut bufr).ok();
+
+        let addr = usize::from_str_radix(bufr.trim_start_matches("0x").trim(), 16).unwrap();
+
+        unsafe { ex.write(addr,&4141656).unwrap() };
+
+        reader.read_line(&mut bufr).ok();
+        bufr.clear();
+
+        reader.read_line(&mut bufr).ok();
+        
+
+        assert_eq!(4141656, bufr.trim().parse().unwrap());
+
+
+        proc.kill().unwrap();
+    }
+}
