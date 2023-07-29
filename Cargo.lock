@@ -3,17 +3,6 @@
 version = 3
 
 [[package]]
-name = "bitfield-struct"
-version = "0.5.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0ef59f0fcc43c87f48e1be2fb5bae934819066bef8be717850944bb882ea232d"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn",
-]
-
-[[package]]
 name = "ctor"
 version = "0.2.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -82,7 +71,6 @@ checksum = "86f0b0d4bf799edbc74508c1e8bf170ff5f41238e5f8225603ca7caaae2b7860"
 name = "poggers"
 version = "0.4.0"
 dependencies = [
- "bitfield-struct",
  "ctor",
  "libc",
  "log",
