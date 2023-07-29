@@ -151,4 +151,7 @@ pub enum MemError {
     /// Failed to free memory
     #[error("VirtualFree failed [{0:X}]+{1:X}")]
     FreeFailure(usize, usize),
+    /// unsupported function for target os
+    #[error("Unsupported")]
+    Unsupported
 }

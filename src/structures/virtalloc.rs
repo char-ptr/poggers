@@ -8,12 +8,10 @@ pub struct VirtAlloc<'a, T : Mem> {
 }
 
 impl<'a,T: Mem> VirtAlloc<'a,T> {
-    #[cfg(windows)]
     /// Free the allocated memory
     pub fn free(self) {
         self.intrl_free();
     }
-    #[cfg(windows)]
     fn intrl_free(&self) {
         unsafe {
             self.proc.raw_virtual_free(self.addr, self.size).ok();
@@ -31,9 +29,7 @@ impl<'a,T: Mem> VirtAlloc<'a,T> {
         self.size
     }
 }
-#[cfg(windows)]
 impl<'a,T: Mem> Drop for VirtAlloc<'a,T> {
-    #[cfg(windows)]
     fn drop(&mut self) {
         self.intrl_free();
     }

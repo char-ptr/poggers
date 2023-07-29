@@ -1,5 +1,6 @@
 /// Memory Protection Flags
 #[derive(Debug)]
+#[cfg(windows)]
 pub enum Protections {
     /// If memory can execute in this page ?
     Execute,
@@ -24,8 +25,18 @@ pub enum Protections {
     /// invalid protection
     INVALID,
 }
+/// Memory Protection Flags
+#[cfg(target_os = "linux")]
+#[bitfield_struct::bitfield(u8)]
+pub struct Protections {
+    read: bool,
+    write: bool,
+    execute: bool,
+    none: bool,
+    #[bits(4)]
+    __:u8
+}
 use std::fmt::{Display, Debug};
-
 #[cfg(windows)]
 use windows::Win32::System::Memory::PAGE_PROTECTION_FLAGS;
 
@@ -75,6 +86,7 @@ impl From<Protections> for u32 {
         val.u32()
     }
 }
+#[cfg(windows)]
 impl Display for Protections {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match *self {
@@ -90,5 +102,86 @@ impl Display for Protections {
             Protections::TargerNoUpdate => write!(f, "TargerNoUpdate"),
             Protections::INVALID => write!(f, "INVALID"),
         } 
+    }
+}
+
+#[cfg(target_os = "linux")]
+impl Protections {
+    /// get u32 version of the protections
+    pub fn u32(&self) -> i32 {
+        let mut ret = 0;
+        if self.read() {
+            ret |= libc::PROT_READ;
+        }
+        if self.write() {
+            ret |= libc::PROT_WRITE;
+        }
+        if self.execute() {
+            ret |= libc::PROT_EXEC;
+        }
+        if self.none() {
+            ret |= libc::PROT_NONE;
+        }
+        ret
+    }
+    /// gets the native version of the protections
+    pub fn native(&self) -> i32 {
+        self.u32()
+    }
+    /// construct protections from native version
+    pub fn from_native(prot : i32) -> Self {
+        let mut ret = Protections::new();
+        if prot & libc::PROT_READ != 0 {
+            ret.set_read(true);
+        }
+        if prot & libc::PROT_WRITE != 0 {
+            ret.set_write(true);
+        }
+        if prot & libc::PROT_EXEC != 0 {
+            ret.set_execute(true);
+        }
+        if prot == 0 {
+            ret.set_none(true);
+        }
+        ret
+    }
+}
+#[cfg(target_os = "linux")]
+impl Display for Protections {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f,"protections< ")?;
+        if self.read() {
+            write!(f, "Read ")?;
+        }
+        if self.write() {
+            write!(f, "Write ")?;
+        }
+        if self.execute() {
+            write!(f, "Execute ")?;
+        }
+        if self.none() {
+            write!(f, "None ")?;
+        };
+        write!(f,">")?;
+        Ok(())
+    }
+}  
+#[cfg(test)]
+mod tests {
+    #[cfg(target_os="linux")]
+    #[test]
+    fn test_linux_prot() {
+        use super::Protections;
+
+        let prot = Protections::new().with_execute(true).with_write(true);
+        println!("prot: {}, {}", prot,prot.native());
+    }
+    #[cfg(target_os="linux")]
+    #[test]
+    fn test_linux_prot2() {
+        use super::Protections;
+
+        let prot = Protections::from_native(6);
+        println!("prot: {}", prot);
     }
 }

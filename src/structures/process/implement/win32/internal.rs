@@ -4,7 +4,7 @@ use windows::{Win32::{System::{Threading::{GetCurrentProcess, GetCurrentProcessI
 
 use crate::{structures::{process::{Process, Internal, ProcessBasics}, protections::Protections, modules::{Module, ModuleError}}, traits::{Mem, MemError}, sigscan::SigScan};
 
-use super::utils::ProcessUtils;
+use super::super::utils::ProcessUtils;
 
 impl Mem for Process<Internal> {
     unsafe fn alter_protection(&self,addr:usize, size: usize, prot: Protections) -> Result<Protections,MemError> {
@@ -64,7 +64,7 @@ impl Mem for Process<Internal> {
 impl Process<Internal> {
 
     /// constructs a process which is the current process
-    pub fn new() -> Self {
+    pub(crate) fn new() -> Self {
         let handl = unsafe { GetCurrentProcess().0 };
         let proc_id = unsafe { GetCurrentProcessId() };
         let mut file_name = widestring::U16String::new();
@@ -109,11 +109,6 @@ impl ProcessUtils for Process<Internal> {
     }
 }
 
-impl Default for Process<Internal> {
-    fn default() -> Self {
-        Self::new()
-    }
-}
 impl SigScan for Process<Internal> {}
 impl Clone for Process<Internal> {
     fn clone(&self) -> Self {

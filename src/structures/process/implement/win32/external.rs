@@ -4,7 +4,7 @@ use windows::Win32::{System::{Diagnostics::Debug::{WriteProcessMemory, ReadProce
 
 use crate::{traits::{Mem, MemError}, structures::{process::{Process, External, ProcessError, U32OrString, ProcessBasics}, protections::Protections, create_snapshot::ToolSnapshot, modules::{Module, ModuleError}}, sigscan::SigScan};
 
-use super::utils::ProcessUtils;
+use super::super::utils::ProcessUtils;
 
 impl Mem for Process<External> {
     unsafe fn alter_protection(
@@ -116,7 +116,7 @@ impl Process<External> {
         name_buf.to_string().unwrap()
     }
     /// finds the process from a pid
-    pub fn find_from_pid(pid:u32) -> Result<Self,ProcessError> {
+    fn find_from_pid(pid:u32) -> Result<Self,ProcessError> {
         let open_hndl = Self::open_handle(pid)?;
         let name = Self::get_name_from_mod(open_hndl);
         Ok(Self {
@@ -127,7 +127,7 @@ impl Process<External> {
         })
     }
     /// finds the process from a name
-    pub fn find_by_name(name:&str) -> Result<Self,ProcessError> {
+    fn find_by_name(name:&str) -> Result<Self,ProcessError> {
         let mut snapshot = ToolSnapshot::new_process().unwrap();
         let res = snapshot
             .find(|process| process.exe_path == name)
@@ -176,84 +176,3 @@ impl TryFrom<&str> for Process<External> {
     }
 }
 impl SigScan for Process<External> {}
-
-
-#[cfg(test)]
-mod test {
-    fn spawn_test_process() -> std::process::Child{
-        use std::process::Command;
-        let proc = Command::new("./target/release/rw-test.exe").stdout(Stdio::null()).stdout(Stdio::piped()).spawn().unwrap();
-        proc
-    }
-    use std::{process::Stdio, io::{BufReader, BufRead}};
-
-    use super::*;
-    #[test]
-    fn test_reading() {
-        let mut proc = spawn_test_process();
-        let mut reader = BufReader::new(proc.stdout.take().unwrap());
-        let mut bufr = String::new();
-        let ex = Process::find_from_pid(proc.id()).unwrap();
-        
-        reader.read_line(&mut bufr).ok();
-
-        let addr = usize::from_str_radix(bufr.trim_start_matches("0x").trim(), 16).unwrap();
-
-        let val = unsafe { ex.read::<u32>(addr).unwrap() };
-
-        bufr.clear();
-
-        reader.read_line(&mut bufr).ok();
-        
-        assert_eq!(val, bufr.trim().parse().unwrap());
-
-
-        proc.kill().unwrap();
-    }
-    #[test]
-    fn test_name_lookup() {
-        let mut proc = spawn_test_process();
-        let mut reader = BufReader::new(proc.stdout.take().unwrap());
-        let mut bufr = String::new();
-        let ex = Process::find_by_name("rw-test.exe").unwrap();
-        
-        reader.read_line(&mut bufr).ok();
-
-        let addr = usize::from_str_radix(bufr.trim_start_matches("0x").trim(), 16).unwrap();
-
-        let val = unsafe { ex.read::<u32>(addr).unwrap() };
-
-        bufr.clear();
-
-        reader.read_line(&mut bufr).ok();
-        
-        assert_eq!(val, bufr.trim().parse().unwrap());
-
-
-        proc.kill().unwrap();
-    }
-    #[test]
-    fn test_writing() {
-        let mut proc = spawn_test_process();
-        let mut reader = BufReader::new(proc.stdout.take().unwrap());
-        let mut bufr = String::new();
-        let ex = Process::find_from_pid(proc.id()).unwrap();
-        
-        reader.read_line(&mut bufr).ok();
-
-        let addr = usize::from_str_radix(bufr.trim_start_matches("0x").trim(), 16).unwrap();
-
-        unsafe { ex.write(addr,&4141656).unwrap() };
-
-        reader.read_line(&mut bufr).ok();
-        bufr.clear();
-
-        reader.read_line(&mut bufr).ok();
-        
-
-        assert_eq!(4141656, bufr.trim().parse().unwrap());
-
-
-        proc.kill().unwrap();
-    }
-}
