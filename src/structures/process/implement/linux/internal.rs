@@ -43,7 +43,6 @@ impl Process<Internal> {
         Self {
             pid: unsafe { libc::getpid() } as u32,
             name,
-            handl: None,
             mrk: Default::default(),
         }
     }

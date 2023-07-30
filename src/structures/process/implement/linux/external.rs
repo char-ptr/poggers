@@ -1,6 +1,6 @@
 use libc::{c_void, __errno_location, process_vm_readv, process_vm_writev};
 
-use crate::{traits::Mem, structures::{process::{Process, External, ProcessError, U32OrString}, protections::Protections}, sigscan::SigScan};
+use crate::{traits::Mem, structures::{process::{Process, External, ProcessError, U32OrString, implement::utils::ProcessUtils}, protections::Protections}, sigscan::SigScan};
 
 impl Mem for Process<External> {
     /// will always return unsupported.
@@ -105,7 +105,6 @@ impl Process<External> {
         Ok(Self {
             pid,
             name: name.trim().to_string(),
-            handl: None,
             mrk: std::marker::PhantomData
         })
     } 
@@ -122,6 +121,11 @@ impl TryFrom<&str> for Process<External> {
 
     fn try_from(value: &str) -> Result<Self, Self::Error> {
         Self::find_by_name(value)
+    }
+}
+impl ProcessUtils for Process<External> {
+    fn get_module(&self, name:&str) -> Result<crate::structures::modules::Module<Self>,crate::structures::modules::ModuleError> where Self: Sized + SigScan {
+        todo!()
     }
 }
 

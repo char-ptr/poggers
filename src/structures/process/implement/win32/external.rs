@@ -1,4 +1,4 @@
-use std::{ffi::c_void, rc::Rc, mem::size_of};
+use std::{ffi::c_void, rc::Rc, mem::size_of, path::PathBuf};
 
 use windows::Win32::{System::{Diagnostics::Debug::{WriteProcessMemory, ReadProcessMemory}, Memory::{VirtualProtectEx, VirtualAllocEx, MEM_COMMIT, MEM_RESERVE, VirtualFreeEx, MEM_RELEASE, VirtualQueryEx, MEMORY_BASIC_INFORMATION}, Threading::{OpenProcess, PROCESS_ALL_ACCESS}, ProcessStatus::GetModuleFileNameExW}, Foundation::{GetLastError, HANDLE}};
 
@@ -120,7 +120,7 @@ impl Process<External> {
         let open_hndl = Self::open_handle(pid)?;
         let name = Self::get_name_from_mod(open_hndl);
         Ok(Self {
-            handl: Some(open_hndl.0),
+            handl: open_hndl.0,
             pid,
             name,
             mrk: Default::default(),
@@ -146,8 +146,10 @@ impl ProcessUtils for Process<External> {
         Ok(Module{
             base_address: res.base_address,
             size: res.size,
+            end_address: res.base_address + res.size,
+            path: PathBuf::from(res.exe_path),
             name: res.name,
-            handle: Some(res.handle.0),
+            handle: res.handle.0,
             owner
         })
 
@@ -156,7 +158,7 @@ impl ProcessUtils for Process<External> {
 impl Clone for Process<External> {
     fn clone(&self) -> Self {
         Self {
-            handl: Some(self.get_handle().0),
+            handl: self.get_handle().0,
             pid: self.pid,
             name: self.name.clone(),
             mrk: Default::default(),

@@ -17,7 +17,8 @@ pub struct Process<T=Holding> {
     /// the current process name
     pub(crate) name: String,
     /// always none on linux, some on windows. is the handle.
-    pub(crate) handl: Option<isize>,
+    #[cfg(windows)]
+    pub(crate) handl: isize,
     pub(crate) mrk: PhantomData<T>
 }
 
@@ -48,7 +49,7 @@ impl<T> ProcessBasics for  Process<T> {
     /// WINDOWS ONLY
     #[cfg(windows)]
     fn get_handle(&self) -> HANDLE {
-        HANDLE(self.handl.unwrap())
+        HANDLE(self.handl)
     }
 } 
 

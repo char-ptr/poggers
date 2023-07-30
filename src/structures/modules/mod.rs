@@ -1,14 +1,17 @@
 /// implementation for modules
 pub mod implement;
-use std::rc::Rc;
+use std::{rc::Rc, path::{PathBuf}};
 
 use crate::sigscan::SigScan;
 /// represents a module in a process
 pub struct Module<T: SigScan> {
     pub(crate) name: String,
+    pub(crate) path: PathBuf,
     pub(crate) base_address: usize,
+    pub(crate) end_address: usize,
     pub(crate) size: usize,
-    pub(crate) handle: Option<isize>,   
+    #[cfg(windows)]
+    pub(crate) handle: isize,   
     pub(crate) owner: Rc< T >
 }
 #[cfg(windows)]
@@ -23,6 +26,14 @@ impl <T: SigScan> Module<T> {
     pub fn get_base_address(&self) -> usize {
         self.base_address
     }
+    /// Get the end address of the module
+    pub fn get_end_address(&self) -> usize {
+        self.end_address
+    }
+    /// get path of the module
+    pub fn get_path(&self) -> &PathBuf {
+        &self.path
+    }
     /// Get the size of the module
     pub fn get_size(&self) -> usize {
         self.size
@@ -31,7 +42,7 @@ impl <T: SigScan> Module<T> {
     /// Get the handle of the module
     pub fn get_handle(&self) -> HANDLE {
 
-        HANDLE(self.handle.unwrap())
+        HANDLE(self.handle)
     }
     /// Get the owner of the module
     pub fn get_owner(&self) -> & T {

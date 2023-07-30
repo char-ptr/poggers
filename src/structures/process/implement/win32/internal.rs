@@ -1,4 +1,4 @@
-use std::{ffi::c_void, mem::size_of, rc::Rc};
+use std::{ffi::c_void, mem::size_of, rc::Rc, path::PathBuf};
 
 use windows::{Win32::{System::{Threading::{GetCurrentProcess, GetCurrentProcessId}, ProcessStatus::{GetProcessImageFileNameW, MODULEINFO, GetModuleInformation}, Memory::{VirtualAlloc, MEM_RESERVE, MEM_COMMIT, VirtualFree, MEM_RELEASE, VirtualProtect, PAGE_PROTECTION_FLAGS, MEMORY_BASIC_INFORMATION, VirtualQuery}, LibraryLoader::GetModuleHandleW}, Foundation::HANDLE}, core::PCWSTR};
 
@@ -70,7 +70,7 @@ impl Process<Internal> {
         let mut file_name = widestring::U16String::new();
         unsafe {GetProcessImageFileNameW(HANDLE(handl), file_name.as_mut_slice()) };
         Self {
-            handl: Some(handl),
+            handl,
             pid: proc_id,
             name: file_name.to_string().unwrap(),
             mrk: Default::default(),
@@ -81,7 +81,7 @@ impl ProcessUtils for Process<Internal> {
     fn get_module(&self, name:&str) -> Result<Module<Self>,ModuleError> where Self: Sized + SigScan {
         let wstr = widestring::U16CString::from_str(name).unwrap();
 
-        let module = unsafe { GetModuleHandleW(PCWSTR::from_raw(wstr.as_ptr())) }
+        let module = unsafe { GetModuleHandleW(PCWSTR::null()) }
             .or(Err(ModuleError::NoModuleFound(name.to_string())))?;
 
         let mut mod_info: MODULEINFO = Default::default();
@@ -101,8 +101,10 @@ impl ProcessUtils for Process<Internal> {
         }
         Ok(Module {
             base_address: module.0 as usize,
-            handle: Some(module.0),
+            handle: module.0,
+            end_address: (module.0 + mod_info.SizeOfImage as isize) as usize,
             name: name.to_string(),
+            path: PathBuf::from(name),
             owner: Rc::new(self.clone()),
             size: mod_info.SizeOfImage as usize,
         })
@@ -113,7 +115,7 @@ impl SigScan for Process<Internal> {}
 impl Clone for Process<Internal> {
     fn clone(&self) -> Self {
         Self {
-            handl: Some(self.get_handle().0),
+            handl: self.get_handle().0,
             pid: self.pid,
             name: self.name.clone(),
             mrk: Default::default(),
