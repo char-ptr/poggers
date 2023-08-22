@@ -1,7 +1,7 @@
 /// implementations for process
 pub mod implement;
 
-use std::{marker::PhantomData, fmt::Display};
+use std::{fmt::Display, marker::PhantomData};
 
 /// represents the process is external
 pub struct External;
@@ -10,16 +10,14 @@ pub struct Internal;
 /// the type has not yet been determined
 pub struct Holding;
 /// a process on the file system
-#[derive(Debug,Clone)]
-pub struct Process<T=Holding> {
+#[derive(Debug, Clone)]
+pub struct Process<T = Holding> {
     /// the current process id
-    pub(crate) pid : u32,
-    /// the current process name
-    pub(crate) name: String,
+    pub(crate) pid: u32,
     /// always none on linux, some on windows. is the handle.
     #[cfg(windows)]
     pub(crate) handl: isize,
-    pub(crate) mrk: PhantomData<T>
+    pub(crate) mrk: PhantomData<T>,
 }
 
 #[cfg(windows)]
@@ -29,21 +27,15 @@ pub trait ProcessBasics {
     /// get the process id
     fn get_pid(&self) -> u32;
     /// get the process name
-    fn get_name(&self) -> &String;
     #[cfg(windows)]
     /// get the process handle [WINDOWS ONLY]
     fn get_handle(&self) -> HANDLE;
 }
 
-
-impl<T> ProcessBasics for  Process<T> {
+impl<T> ProcessBasics for Process<T> {
     /// get the process id
     fn get_pid(&self) -> u32 {
         self.pid
-    }
-    /// get the process name
-    fn get_name(&self) -> &String {
-        &self.name
     }
     /// get the process handle
     /// WINDOWS ONLY
@@ -51,10 +43,10 @@ impl<T> ProcessBasics for  Process<T> {
     fn get_handle(&self) -> HANDLE {
         HANDLE(self.handl)
     }
-} 
+}
 
 /// process errors
-#[derive(Debug,thiserror::Error)]
+#[derive(Debug, thiserror::Error)]
 pub enum ProcessError {
     /// the process was not found
     #[error("process not found: {0}")]
@@ -86,11 +78,11 @@ impl Process<Holding> {
         Process::<Internal>::new()
     }
     /// find a process by id
-    pub fn find_pid(pid: u32) -> Result<Process<External>,ProcessError> {
+    pub fn find_pid(pid: u32) -> Result<Process<External>, ProcessError> {
         Process::<External>::try_from(pid)
     }
     /// find a process by name
-    pub fn find_name(name: &str) -> Result<Process<External>,ProcessError> {
+    pub fn find_name(name: &str) -> Result<Process<External>, ProcessError> {
         Process::<External>::try_from(name)
     }
 }

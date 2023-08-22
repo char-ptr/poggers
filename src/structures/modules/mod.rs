@@ -1,23 +1,23 @@
 /// implementation for modules
 pub mod implement;
-use std::{rc::Rc, path::{PathBuf}};
+use std::{path::PathBuf, rc::Rc, sync::Arc};
 
 use crate::sigscan::SigScan;
 /// represents a module in a process
 pub struct Module<T: SigScan> {
-    pub(crate) name: String,
-    pub(crate) path: PathBuf,
+    pub(crate) name: Arc<String>,
+    pub(crate) path: Arc<PathBuf>,
     pub(crate) base_address: usize,
     pub(crate) end_address: usize,
     pub(crate) size: usize,
     #[cfg(windows)]
-    pub(crate) handle: isize,   
-    pub(crate) owner: Rc< T >
+    pub(crate) handle: isize,
+    pub(crate) owner: Arc<T>,
 }
 #[cfg(windows)]
 use windows::Win32::Foundation::HANDLE;
 
-impl <T: SigScan> Module<T> {
+impl<T: SigScan> Module<T> {
     /// Get the name of the module
     pub fn get_name(&self) -> &str {
         &self.name
@@ -41,11 +41,10 @@ impl <T: SigScan> Module<T> {
     #[cfg(windows)]
     /// Get the handle of the module
     pub fn get_handle(&self) -> HANDLE {
-
         HANDLE(self.handle)
     }
     /// Get the owner of the module
-    pub fn get_owner(&self) -> & T {
+    pub fn get_owner(&self) -> &T {
         self.owner.as_ref()
     }
 }
@@ -59,5 +58,4 @@ pub enum ModuleError {
     /// The module handle could not be retrieved.
     #[error("unable to open handle for '{0}'")]
     UnableToOpenHandle(String),
-
 }

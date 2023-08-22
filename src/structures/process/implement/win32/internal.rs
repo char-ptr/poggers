@@ -1,13 +1,40 @@
-use std::{ffi::c_void, mem::size_of, rc::Rc, path::PathBuf};
+use std::{ffi::c_void, mem::size_of, path::PathBuf, rc::Rc, sync::Arc};
 
-use windows::{Win32::{System::{Threading::{GetCurrentProcess, GetCurrentProcessId}, ProcessStatus::{GetProcessImageFileNameW, MODULEINFO, GetModuleInformation}, Memory::{VirtualAlloc, MEM_RESERVE, MEM_COMMIT, VirtualFree, MEM_RELEASE, VirtualProtect, PAGE_PROTECTION_FLAGS, MEMORY_BASIC_INFORMATION, VirtualQuery}, LibraryLoader::GetModuleHandleW}, Foundation::HANDLE}, core::PCWSTR};
+use windows::{
+    core::PCWSTR,
+    Win32::{
+        Foundation::HANDLE,
+        System::{
+            LibraryLoader::GetModuleHandleW,
+            Memory::{
+                VirtualAlloc, VirtualFree, VirtualProtect, VirtualQuery, MEMORY_BASIC_INFORMATION,
+                MEM_COMMIT, MEM_RELEASE, MEM_RESERVE, PAGE_PROTECTION_FLAGS,
+            },
+            ProcessStatus::{GetModuleInformation, GetProcessImageFileNameW, MODULEINFO},
+            Threading::{GetCurrentProcess, GetCurrentProcessId},
+        },
+    },
+};
 
-use crate::{structures::{process::{Process, Internal, ProcessBasics}, protections::Protections, modules::{Module, ModuleError}}, traits::{Mem, MemError}, sigscan::SigScan};
+use crate::{
+    sigscan::SigScan,
+    structures::{
+        modules::{Module, ModuleError},
+        process::{Internal, Process, ProcessBasics},
+        protections::Protections,
+    },
+    traits::{Mem, MemError},
+};
 
 use super::super::utils::ProcessUtils;
 
 impl Mem for Process<Internal> {
-    unsafe fn alter_protection(&self,addr:usize, size: usize, prot: Protections) -> Result<Protections,MemError> {
+    unsafe fn alter_protection(
+        &self,
+        addr: usize,
+        size: usize,
+        prot: Protections,
+    ) -> Result<Protections, MemError> {
         let mut old_prot = PAGE_PROTECTION_FLAGS::default();
 
         let prot_as_win = prot.native();
@@ -20,17 +47,22 @@ impl Mem for Process<Internal> {
         }
     }
 
-    unsafe fn raw_read(&self, addr: usize,data: *mut u8, size: usize) -> Result<(),MemError> {
+    unsafe fn raw_read(&self, addr: usize, data: *mut u8, size: usize) -> Result<(), MemError> {
         (addr as *mut u8).copy_to_nonoverlapping(data, size);
         Ok(())
     }
 
-    unsafe fn raw_write(&self, addr: usize,data: *const u8, size: usize) -> Result<(),MemError> {
+    unsafe fn raw_write(&self, addr: usize, data: *const u8, size: usize) -> Result<(), MemError> {
         (addr as *mut u8).copy_from_nonoverlapping(data, size);
         Ok(())
     }
 
-    unsafe fn raw_virtual_alloc(&self, addr: Option<usize>, size: usize, prot: Protections) -> Result<usize,MemError> {
+    unsafe fn raw_virtual_alloc(
+        &self,
+        addr: Option<usize>,
+        size: usize,
+        prot: Protections,
+    ) -> Result<usize, MemError> {
         let alloc_ret = VirtualAlloc(
             addr.map(|x| x as *const c_void),
             size,
@@ -43,42 +75,50 @@ impl Mem for Process<Internal> {
             Ok(alloc_ret as usize)
         }
     }
-    unsafe fn raw_virtual_free(&self, addr:usize, size:usize) -> Result<(),MemError> {
+    unsafe fn raw_virtual_free(&self, addr: usize, size: usize) -> Result<(), MemError> {
         let is_ok = VirtualFree(addr as *mut c_void, size, MEM_RELEASE);
         if is_ok.as_bool() {
             Ok(())
-        }
-        else {
-            Err(MemError::FreeFailure(addr,size))
+        } else {
+            Err(MemError::FreeFailure(addr, size))
         }
     }
-    unsafe fn raw_query(&self, addr : usize) -> MEMORY_BASIC_INFORMATION {
-        let mut info =  MEMORY_BASIC_INFORMATION {
-            RegionSize : 0x4096,
+    unsafe fn raw_query(&self, addr: usize) -> MEMORY_BASIC_INFORMATION {
+        let mut info = MEMORY_BASIC_INFORMATION {
+            RegionSize: 0x4096,
             ..Default::default()
         };
-        VirtualQuery(Some(addr as *const c_void), &mut info, size_of::<MEMORY_BASIC_INFORMATION>());
+        VirtualQuery(
+            Some(addr as *const c_void),
+            &mut info,
+            size_of::<MEMORY_BASIC_INFORMATION>(),
+        );
         info
     }
 }
 impl Process<Internal> {
-
     /// constructs a process which is the current process
     pub(crate) fn new() -> Self {
         let handl = unsafe { GetCurrentProcess().0 };
         let proc_id = unsafe { GetCurrentProcessId() };
-        let mut file_name = widestring::U16String::new();
-        unsafe {GetProcessImageFileNameW(HANDLE(handl), file_name.as_mut_slice()) };
         Self {
             handl,
             pid: proc_id,
-            name: file_name.to_string().unwrap(),
             mrk: Default::default(),
         }
     }
 }
 impl ProcessUtils for Process<Internal> {
-    fn get_module(&self, name:&str) -> Result<Module<Self>,ModuleError> where Self: Sized + SigScan {
+    fn get_name(&self) -> String {
+        let mut file_name = widestring::U16String::new();
+        unsafe { GetProcessImageFileNameW(HANDLE(self.handl), file_name.as_mut_slice()) };
+        file_name.to_string_lossy()
+    }
+
+    fn get_module(&self, name: &str) -> Result<Module<Self>, ModuleError>
+    where
+        Self: Sized + SigScan,
+    {
         let wstr = widestring::U16CString::from_str(name).unwrap();
 
         let module = unsafe { GetModuleHandleW(PCWSTR::null()) }
@@ -103,9 +143,9 @@ impl ProcessUtils for Process<Internal> {
             base_address: module.0 as usize,
             handle: module.0,
             end_address: (module.0 + mod_info.SizeOfImage as isize) as usize,
-            name: name.to_string(),
-            path: PathBuf::from(name),
-            owner: Rc::new(self.clone()),
+            name: Arc::new(name.to_string()),
+            path: Arc::new(PathBuf::from(name)),
+            owner: Arc::new(self.clone()),
             size: mod_info.SizeOfImage as usize,
         })
     }
@@ -117,7 +157,6 @@ impl Clone for Process<Internal> {
         Self {
             handl: self.get_handle().0,
             pid: self.pid,
-            name: self.name.clone(),
             mrk: Default::default(),
         }
     }
