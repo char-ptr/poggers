@@ -35,11 +35,11 @@ pub trait SigScan: Mem {
         let mut pi = 0;
         let pl = compiled_pattern.len();
         for (i, data) in iter.enumerate() {
-            if let b'?' = compiled_pattern[pi] {
+            if let Some(b'?') = compiled_pattern.get(pi) {
                 pi += 1;
                 continue;
             }
-            if *data == compiled_pattern[pi] {
+            if compiled_pattern.get(pi).map(|x| x == data).unwrap_or(false) {
                 if pi == pl - 1 {
                     return Some(i - pl + 1);
                 }
