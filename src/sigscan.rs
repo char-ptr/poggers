@@ -32,20 +32,27 @@ pub trait SigScan: Mem {
                 }
             }
         }
-        let mut pi = 0;
-        let pl = compiled_pattern.len();
+        let mut pattern_index = 0;
+        let pattern_length = compiled_pattern.len();
         for (i, data) in iter.enumerate() {
-            if let Some(b'?') = compiled_pattern.get(pi) {
-                pi += 1;
-                continue;
-            }
-            if compiled_pattern.get(pi).map(|x| x == data).unwrap_or(false) {
-                if pi == pl - 1 {
-                    return Some(i - pl + 1);
+            let pattern_byte = compiled_pattern.get(pattern_index);
+            match pattern_byte {
+                Some(b'?') => {
+                    if pattern_index == pattern_length - 1 {
+                        return Some(i - pattern_length + 1);
+                    }
+                    pattern_index += 1;
+                    continue;
                 }
-                pi += 1;
-            } else {
-                pi = 0;
+                Some(x) if x == data => {
+                    if pattern_index == pattern_length - 1 {
+                        return Some(i - pattern_length + 1);
+                    }
+                    pattern_index += 1;
+                }
+                _ => {
+                    pattern_index = 0;
+                }
             }
         }
         None
