@@ -119,7 +119,7 @@ impl ProcessUtils for Process<Internal> {
     where
         Self: Sized + SigScan,
     {
-        let wstr = widestring::U16CString::from_str(name).unwrap();
+        // let wstr = widestring::U16CString::from_str(name).unwrap();
 
         let module = unsafe { GetModuleHandleW(PCWSTR::null()) }
             .or(Err(ModuleError::NoModuleFound(name.to_string())))?;
