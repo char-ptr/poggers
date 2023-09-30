@@ -40,7 +40,7 @@ impl Mem for Process<Internal> {
         let prot_as_win = prot.native();
 
         let ok = VirtualProtect(addr as *const c_void, size, prot_as_win, &mut old_prot);
-        if ok.as_bool() {
+        if ok.is_ok() {
             Ok(old_prot.0.into())
         } else {
             Err(MemError::ProtectFailure(addr, size, prot))
@@ -77,7 +77,7 @@ impl Mem for Process<Internal> {
     }
     unsafe fn raw_virtual_free(&self, addr: usize, size: usize) -> Result<(), MemError> {
         let is_ok = VirtualFree(addr as *mut c_void, size, MEM_RELEASE);
-        if is_ok.as_bool() {
+        if is_ok.is_ok() {
             Ok(())
         } else {
             Err(MemError::FreeFailure(addr, size))
@@ -136,7 +136,7 @@ impl ProcessUtils for Process<Internal> {
                 std::mem::size_of::<MODULEINFO>() as u32,
             )
         };
-        if !info.as_bool() {
+        if !info.is_ok() {
             return Err(ModuleError::UnableToOpenHandle(name.to_string()));
         }
         Ok(Module {

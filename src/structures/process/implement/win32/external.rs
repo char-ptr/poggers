@@ -34,54 +34,48 @@ impl Mem for Process<External> {
         prot: Protections,
     ) -> Result<Protections, MemError> {
         let mut old_protect = Default::default();
-        let res = unsafe {
-            VirtualProtectEx(
+        unsafe {
+            let Ok(_) = VirtualProtectEx(
                 self.get_handle(),
                 addr as *const c_void,
                 size,
                 prot.native(),
                 &mut old_protect,
-            )
-        };
-        if res.as_bool() {
-            Ok(old_protect.0.into())
-        } else {
-            // plan to match in the future, cba atm
-            let e = unsafe { GetLastError() };
-            {
-                println!("Error: {:?}", e);
-            }
-            Err(MemError::ProtectFailure(addr, size, prot))
+            ) else {
+                return Err(MemError::ProtectFailure(addr, size, prot));
+            };
         }
+        Ok(old_protect.0.into())
+        // if res.as_bool() {
+        //     Ok(old_protect.0.into())
+        // } else {
+        //     // plan to match in the future, cba atm
+        //     let e = unsafe { GetLastError() };
+        //     {
+        //         println!("Error: {:?}", e);
+        //     }
+        //     Err(MemError::ProtectFailure(addr, size, prot))
+        // }
     }
     unsafe fn raw_read(&self, addr: usize, data: *mut u8, size: usize) -> Result<(), MemError> {
-        let res = ReadProcessMemory(
+        ReadProcessMemory(
             self.get_handle(),
             addr as *const c_void,
             data as *mut _,
             size,
             Some(&mut 0),
-        );
-
-        if res.as_bool() {
-            Ok(())
-        } else {
-            Err(MemError::ReadFailure(addr))
-        }
+        )
+        .or_else(|_| Err(MemError::ReadFailure(addr)))
     }
     unsafe fn raw_write(&self, addr: usize, data: *const u8, size: usize) -> Result<(), MemError> {
-        let res = WriteProcessMemory(
+        WriteProcessMemory(
             self.get_handle(),
             addr as *const c_void,
             data as *const _,
             size,
             Some(&mut 0),
-        );
-        if res.as_bool() {
-            Ok(())
-        } else {
-            Err(MemError::WriteFailure(addr))
-        }
+        )
+        .or_else(|_| Err(MemError::WriteFailure(addr)))
     }
     #[must_use = "keep the virtalloc alive to keep the memory allocated"]
     unsafe fn raw_virtual_alloc(
@@ -104,12 +98,8 @@ impl Mem for Process<External> {
         }
     }
     unsafe fn raw_virtual_free(&self, addr: usize, size: usize) -> Result<(), MemError> {
-        let is_ok = VirtualFreeEx(self.get_handle(), addr as *mut c_void, size, MEM_RELEASE);
-        if is_ok.as_bool() {
-            Ok(())
-        } else {
-            Err(MemError::FreeFailure(addr, size))
-        }
+        VirtualFreeEx(self.get_handle(), addr as *mut c_void, size, MEM_RELEASE)
+            .or_else(|_| Err(MemError::FreeFailure(addr, size)))
     }
     unsafe fn raw_query(&self, addr: usize) -> MEMORY_BASIC_INFORMATION {
         let mut info = MEMORY_BASIC_INFORMATION {

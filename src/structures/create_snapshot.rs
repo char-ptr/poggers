@@ -53,17 +53,17 @@ pub struct ToolSnapshot<T = NoTypeSel> {
 }
 impl ToolSnapshot {
     /// Create a new process snapshot
-    pub fn new_process() -> Result<ToolSnapshot<STProcess>,SnapshotToolError> {
+    pub fn new_process() -> Result<ToolSnapshot<STProcess>, SnapshotToolError> {
         ToolSnapshot::<STProcess>::new()
     }
     /// Create a new module snapshot
-    pub fn new_module(proc_id: Option<u32>) -> Result<ToolSnapshot<STModule>,SnapshotToolError> {
+    pub fn new_module(proc_id: Option<u32>) -> Result<ToolSnapshot<STModule>, SnapshotToolError> {
         ToolSnapshot::<STModule>::new(proc_id)
     }
 }
 impl ToolSnapshot<STModule> {
     /// Creates a new module snapshot
-    pub fn new(proc_id: Option<u32>) -> Result<Self,SnapshotToolError> {
+    pub fn new(proc_id: Option<u32>) -> Result<Self, SnapshotToolError> {
         let handle = unsafe {
             CreateToolhelp32Snapshot(
                 TH32CS_SNAPMODULE | TH32CS_SNAPMODULE32,
@@ -88,7 +88,7 @@ impl Iterator for ToolSnapshot<STModule> {
         };
         return if !self.first_complete {
             unsafe {
-                if Module32First(self.handle, &mut lpme).as_bool() {
+                if Module32First(self.handle, &mut lpme).is_ok() {
                     self.first_complete = true;
                     Some(STModule {
                         process_id: lpme.th32ProcessID,
@@ -110,7 +110,7 @@ impl Iterator for ToolSnapshot<STModule> {
             }
         } else {
             unsafe {
-                if Module32Next(self.handle, &mut lpme).as_bool() {
+                if Module32Next(self.handle, &mut lpme).is_ok() {
                     Some(STModule {
                         process_id: lpme.th32ProcessID,
                         base_address: lpme.modBaseAddr as usize,
@@ -134,7 +134,7 @@ impl Iterator for ToolSnapshot<STModule> {
 }
 impl ToolSnapshot<STProcess> {
     /// Creates a new process snapshot
-    pub fn new() -> Result<Self,SnapshotToolError> {
+    pub fn new() -> Result<Self, SnapshotToolError> {
         let handle = unsafe { CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0) };
         handle
             .map(|handle| Self {
@@ -154,7 +154,7 @@ impl Iterator for ToolSnapshot<STProcess> {
         };
         return if !self.first_complete {
             unsafe {
-                if Process32First(self.handle, &mut lppe).as_bool() {
+                if Process32First(self.handle, &mut lppe).is_ok() {
                     self.first_complete = true;
                     Some(STProcess {
                         id: lppe.th32ProcessID,
@@ -171,7 +171,7 @@ impl Iterator for ToolSnapshot<STProcess> {
             }
         } else {
             unsafe {
-                if Process32Next(self.handle, &mut lppe).as_bool() {
+                if Process32Next(self.handle, &mut lppe).is_ok() {
                     Some(STProcess {
                         id: lppe.th32ProcessID,
                         thread_count: lppe.cntThreads,
