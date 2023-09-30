@@ -1,7 +1,7 @@
-use std::{ffi::c_void, mem::size_of, path::PathBuf, rc::Rc, sync::Arc};
+use std::{ffi::c_void, marker::PhantomData, mem::size_of, path::PathBuf, sync::Arc};
 
 use windows::Win32::{
-    Foundation::{GetLastError, HANDLE},
+    Foundation::HANDLE,
     System::{
         Diagnostics::Debug::{ReadProcessMemory, WriteProcessMemory},
         Memory::{
@@ -65,7 +65,7 @@ impl Mem for Process<External> {
             size,
             Some(&mut 0),
         )
-        .or_else(|_| Err(MemError::ReadFailure(addr)))
+        .map_err(|_| MemError::ReadFailure(addr))
     }
     unsafe fn raw_write(&self, addr: usize, data: *const u8, size: usize) -> Result<(), MemError> {
         WriteProcessMemory(
@@ -75,7 +75,7 @@ impl Mem for Process<External> {
             size,
             Some(&mut 0),
         )
-        .or_else(|_| Err(MemError::WriteFailure(addr)))
+        .map_err(|_| MemError::WriteFailure(addr))
     }
     #[must_use = "keep the virtalloc alive to keep the memory allocated"]
     unsafe fn raw_virtual_alloc(
@@ -99,7 +99,7 @@ impl Mem for Process<External> {
     }
     unsafe fn raw_virtual_free(&self, addr: usize, size: usize) -> Result<(), MemError> {
         VirtualFreeEx(self.get_handle(), addr as *mut c_void, size, MEM_RELEASE)
-            .or_else(|_| Err(MemError::FreeFailure(addr, size)))
+            .map_err(|_| MemError::FreeFailure(addr, size))
     }
     unsafe fn raw_query(&self, addr: usize) -> MEMORY_BASIC_INFORMATION {
         let mut info = MEMORY_BASIC_INFORMATION {
@@ -152,6 +152,16 @@ impl Process<External> {
             ProcessError::UnableToFindProcess(U32OrString::String(name.to_string())),
         )?;
         Self::find_from_pid(res.id)
+    }
+
+    // pub function to allow people to make a process from an existing handle. really not very safe or recommended, but it's here if they're sure they want to use it
+    /// get a process from a handle. assumes everything is valid about the handle (things could go very wrong if the permissions on handle is incorrect.)
+    pub const fn from_handle(hnd: HANDLE, pid: u32) -> Self {
+        Self {
+            handl: hnd.0,
+            pid,
+            mrk: PhantomData,
+        }
     }
 }
 

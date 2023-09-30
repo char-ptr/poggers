@@ -34,12 +34,14 @@ pub trait ProcessBasics {
 
 impl<T> ProcessBasics for Process<T> {
     /// get the process id
+    #[inline(always)]
     fn get_pid(&self) -> u32 {
         self.pid
     }
     /// get the process handle
     /// WINDOWS ONLY
     #[cfg(windows)]
+    #[inline(always)]
     fn get_handle(&self) -> HANDLE {
         HANDLE(self.handl)
     }

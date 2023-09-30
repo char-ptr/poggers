@@ -1,6 +1,6 @@
 /// implementation for modules
 pub mod implement;
-use std::{path::PathBuf, rc::Rc, sync::Arc};
+use std::{path::PathBuf, sync::Arc};
 
 use crate::sigscan::SigScan;
 /// represents a module in a process

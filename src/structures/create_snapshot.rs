@@ -191,7 +191,7 @@ impl Iterator for ToolSnapshot<STProcess> {
 impl<T> Drop for ToolSnapshot<T> {
     fn drop(&mut self) {
         unsafe {
-            CloseHandle(self.handle);
+            CloseHandle(self.handle).ok();
         }
     }
 }

@@ -1,4 +1,4 @@
-use std::{ffi::c_void, mem::size_of, path::PathBuf, rc::Rc, sync::Arc};
+use std::{ffi::c_void, mem::size_of, path::PathBuf, sync::Arc};
 
 use windows::{
     core::PCWSTR,
@@ -136,7 +136,7 @@ impl ProcessUtils for Process<Internal> {
                 std::mem::size_of::<MODULEINFO>() as u32,
             )
         };
-        if !info.is_ok() {
+        if info.is_err() {
             return Err(ModuleError::UnableToOpenHandle(name.to_string()));
         }
         Ok(Module {

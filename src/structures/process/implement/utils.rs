@@ -19,5 +19,6 @@ pub trait ProcessUtils: ProcessBasics {
     {
         self.get_module(&self.get_name())
     }
+    /// get the name of the process
     fn get_name(&self) -> String;
 }
