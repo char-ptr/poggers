@@ -1,53 +1,55 @@
 //!  # Poggers
-//!  A Work in Progress Memory (game cheating) Library for Rust
-//!  # Safety
-//!  We do not wish to strive away from the safe nature of rust, so all the code in this library **should** be safe if you don't do weird stuff.
-//!
-//!  # Introduction for windows
-//!  ## External
-//!  Poggers allows you to effortlessly make external cheats for games. The most important structs & traits are:
-//!  * [`ExProcess`] - A wrapper around a process, allowing you to do basic things like read, write and change protections on memory..
-//!  * [`ExModule`] - A wrapper around a module.
-//!  * [`Mem`] - A trait which implements memory functionality for [`ExProcess`] and [`ExModule`].
-//!  * [`SigScan`] - A trait which implements signature scanning functionality for [`ExProcess`] and [`ExModule`].
-//!  * [`ToolSnapshot`] - A wrapper around the toolhelp32snapshot api using rust iterators.
-//! 
-//!  With these two constructs it should make it pretty easy to safe and efficient external cheats.
-//!  ## Internal
-//!  Poggers also allows you to make internal cheats for games. The most important structs & traits are:
-//!  * [`InModule`] - A wrapper around a module.
-//!
-//!  Check out [poggers-derive](https://crates.io/crates/poggers-derive) for a derive macro to easily run a function upon injection
-//!  # Introduction for linux
-//!  Not complete.
-//!
-//!  # Example
-//!  ```
-//!  use poggers::external::process::ExProcess;
-//!  let process = ExProcess::new("notepad.exe").unwrap();
-//!  let module = process.base_module().unwrap();
-//!  let what = module.scan_virtual("48 8B 05 ? ? ? ? 48 8B 88 ? ? ? ? 48 85 C9 74 0A").unwrap();
-//!  process.read::<u32>(what).unwrap();
-//!  ```
-//!
+//!  Poggers is a library for interacting with the memory of a process.
+//!  This library currently only supports Linux, and windows. and should take minimal effort to make your code cross compilable.
+//!  ## Common Structs
+//!  * [`Process`](structures::process::Process) - A struct which holds the handle to a process.
+//!  * [`Module`](structures::modules::Module) - A struct which holds the handle to a module.
+//!  * [`ToolSnapshot`](structures::create_snapshot::ToolSnapshot) - A wrapper around the ToolHelp32Snapshot function.
+//!  ## Common Traits
+//!  * [`Mem`](traits::Mem) - A trait which allows a struct to read and write to memory.
+//!  * [`SigScan`](sigscan::SigScan) - A trait which allows a struct to sig scan.
+//!  ## Example External usage:
+//! ```
+//!  use poggers::structures::process::Process;
+//!  use poggers::traits::Mem;
+//!  fn main() {
+//!     let process = Process::find_name("csgo.exe").unwrap();
+//!     unsafe {
+//!         process.write(0x1000,&1).unwrap()
+//!     }
+//! }
+//! ```
+//!  ## Example Internal usage:
+//! ```
+//! use poggers::structures::process::implement::utils::ProcessUtils;
+//! use poggers::structures::process::Process;
+//! use poggers::traits::Mem;
+//! // automatically create an entry point for your dll! (crate type must be cdylib)
+//! // you also do not need to worry about panic unwinding yourself as it is already done.
+//! #[poggers_derive::create_entry]
+//! fn entry() {
+//!     let this_proc = Process::this_process();
+//!     unsafe {
+//!         let bleh : i32 = this_proc.read(0x1000).unwrap();
+//!         println!("{}",bleh);
+//!         let base_mod_name = this_proc.get_base_module().unwrap().get_name();
+//!         println!("{}",base_mod_name);
+//!     }
+//! }
+//! ```
 //!  ## License
 //!  This project is licensed under the GPL-2.0 license.
 
-
-
 #![warn(missing_docs)]
+
 // #![feature(generic_const_exprs)]
 /// exports primarily for [`poggers-derive`]
 pub mod exports;
 
-/// Holder of main traits, primarily [`Mem`]
-pub mod traits;
-/// Holder of the [`SigScan`] trait
+/// Holder of the [`SigScan`](sigscan::SigScan) trait
 pub mod sigscan;
-/// For all external related things.
-// pub mod external;
-// /// For all internal related things.
-// pub mod internal;
 /// Structures which may be used cross platform.
 pub mod structures;
+/// Holder of main traits, primarily [`Mem`](traits::Mem)
+pub mod traits;
 // struct Temp;

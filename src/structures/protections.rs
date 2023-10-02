@@ -34,16 +34,16 @@ pub struct Protections {
     execute: bool,
     none: bool,
     #[bits(4)]
-    __:u8
+    __: u8,
 }
-use std::fmt::{Display, Debug};
+use std::fmt::{Debug, Display};
 #[cfg(windows)]
 use windows::Win32::System::Memory::PAGE_PROTECTION_FLAGS;
 
 #[cfg(windows)]
 impl Protections {
     /// convert into u32
-    pub fn u32(&self) -> u32 {
+    pub const fn u32(&self) -> u32 {
         match &self {
             Protections::Execute => 0x10,
             Protections::ExecuteRead => 0x20,
@@ -59,7 +59,7 @@ impl Protections {
         }
     }
     /// convert into native version
-    pub fn native(&self) -> PAGE_PROTECTION_FLAGS {
+    pub const fn native(&self) -> PAGE_PROTECTION_FLAGS {
         PAGE_PROTECTION_FLAGS(self.u32())
     }
 }
@@ -101,7 +101,7 @@ impl Display for Protections {
             Protections::TargetInvalid => write!(f, "TargetInvalid"),
             Protections::TargerNoUpdate => write!(f, "TargerNoUpdate"),
             Protections::INVALID => write!(f, "INVALID"),
-        } 
+        }
     }
 }
 
@@ -129,7 +129,7 @@ impl Protections {
         self.u32()
     }
     /// construct protections from native version
-    pub fn from_native(prot : i32) -> Self {
+    pub fn from_native(prot: i32) -> Self {
         let mut ret = Protections::new();
         if prot & libc::PROT_READ != 0 {
             ret.set_read(true);
@@ -149,7 +149,7 @@ impl Protections {
 #[cfg(target_os = "linux")]
 impl Display for Protections {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f,"protections< ")?;
+        write!(f, "protections< ")?;
         if self.read() {
             write!(f, "Read ")?;
         }
@@ -162,21 +162,21 @@ impl Display for Protections {
         if self.none() {
             write!(f, "None ")?;
         };
-        write!(f,">")?;
+        write!(f, ">")?;
         Ok(())
     }
-}  
+}
 #[cfg(test)]
 mod tests {
-    #[cfg(target_os="linux")]
+    #[cfg(target_os = "linux")]
     #[test]
     fn test_linux_prot() {
         use super::Protections;
 
         let prot = Protections::new().with_execute(true).with_write(true);
-        println!("prot: {}, {}", prot,prot.native());
+        println!("prot: {}, {}", prot, prot.native());
     }
-    #[cfg(target_os="linux")]
+    #[cfg(target_os = "linux")]
     #[test]
     fn test_linux_prot2() {
         use super::Protections;

@@ -1,6 +1,6 @@
 [package]
 name = "poggers"
-version = "0.4.0"
+version = "1.0.0"
 edition = "2021"
 description = "memory lib"
 license = "GPL-2.0"
@@ -19,14 +19,14 @@ members = ["poggers-derive", "rw-test"]
 [profile.release]
 lto = true
 
-[profile.debuga]
+[profile.relbug]
 inherits = "release"
 debug = true
 
 [dependencies]
 thiserror = "1.0.49"
-log = "0.4.20"
 widestring = "1.0.2"
+poggers-derive = { path = "poggers-derive", version = "0.1.5" }
 
 [target.'cfg(target_os="windows")'.dependencies]
 windows = { version = "0.51.1", features = [
@@ -50,4 +50,4 @@ ctor = { version = "0.2.4" }
 mach = { version = "0.3.2" }
 
 [dev-dependencies]
-poggers-derive = { path = "poggers-derive" }
+log = "0.4.20"

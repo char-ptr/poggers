@@ -53,10 +53,12 @@ pub struct ToolSnapshot<T = NoTypeSel> {
 }
 impl ToolSnapshot {
     /// Create a new process snapshot
+    #[inline(always)]
     pub fn new_process() -> Result<ToolSnapshot<STProcess>, SnapshotToolError> {
         ToolSnapshot::<STProcess>::new()
     }
     /// Create a new module snapshot
+    #[inline(always)]
     pub fn new_module(proc_id: Option<u32>) -> Result<ToolSnapshot<STModule>, SnapshotToolError> {
         ToolSnapshot::<STModule>::new(proc_id)
     }

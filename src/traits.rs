@@ -92,7 +92,6 @@ pub trait Mem {
     /// To prevent this from happening use forget.
     /// # Safety
     /// unsafe because it does direct calls to the OS. the address supplied could be invalid.
-    #[must_use = "keep the virtalloc alive to keep the memory allocated"]
     unsafe fn virtual_alloc(&self, addr: Option<usize>, size: usize, prot: Protections) -> Result<VirtAlloc<Self>,MemError> where Self: Sized {
         let addr = self.raw_virtual_alloc(addr, size, prot)?;
         Ok(VirtAlloc {
