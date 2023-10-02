@@ -1,6 +1,6 @@
 [package]
 name = "poggers"
-version = "1.0.0"
+version = "1.0.1"
 edition = "2021"
 description = "memory lib"
 license = "GPL-2.0"

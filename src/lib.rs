@@ -1,6 +1,20 @@
 //!  # Poggers
-//!  Poggers is a library for interacting with the memory of a process.
-//!  This library currently only supports Linux, and windows. and should take minimal effort to make your code cross compilable.
+//!  A library for interacting with memory, processes, and similar tools for primarily game cheating purposes.
+//! With poggers you're able to achieve the following things:
+//! - Easily create an entrypoint for your DLL with panic unwrapping already handled for you
+//! - Effortlessly read and write into an external process' memory
+//! - Use IDA signatures to scan for instructions in processes.
+//! - Use CreateToolhelp32Snapshot in a sane fashion with first class support for iterating over processes and modules
+//! - Cross compatibility for Windows and Linux with minimal code changes
+//!
+//! [Documentation](https://docs.rs/poggers/latest/poggers/) | [Crates.io](https://crates.io/crates/poggers) | [Repository](https://github.com/pozm/poggers)
+//! ## Add into your project
+//! ```toml
+//! [dependencies]
+//! poggers = "1"
+//! # if you need to use the entrypoint macro
+//! poggers_derive = "0.1.5"
+//! ```
 //!  ## Common Structs
 //!  * [`Process`](structures::process::Process) - A struct which holds the handle to a process.
 //!  * [`Module`](structures::modules::Module) - A struct which holds the handle to a module.
