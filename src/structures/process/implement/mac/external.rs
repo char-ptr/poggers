@@ -20,6 +20,31 @@ use crate::traits::MemError::WriteFailure;
 // https://opensource.apple.com/source/xnu/xnu-4570.1.46/libsyscall/mach/mach_vm.c.auto.html
 // https://github.com/apple/darwin-xnu/blob/main/libsyscall/mach/mach_vm.c
 impl Mem for Process<External> {
+    unsafe fn alter_protection(
+        &self,
+        addr: usize,
+        size: usize,
+        prot: crate::structures::protections::Protections,
+    ) -> Result<crate::structures::protections::Protections, crate::traits::MemError> {
+        let task = self.task().ok_or(ProcessError::UnableToGetTask)?;
+
+        let ret = mach::vm::mach_vm_map(
+            task,
+            addr as *mut mach_vm_address_t,
+            size as mach_vm_size_t,
+            0,
+            VM_FLAGS_ANYWHERE,
+            MACH_PORT_NULL,
+            0,
+            0,
+            prot.native(),
+            prot.native(),
+            VM_INHERIT_NONE,
+
+        );
+        println!("kernel responded with {ret}");
+        Ok(prot)
+    }
     unsafe fn raw_read(
         &self,
         addr: usize,
@@ -77,31 +102,6 @@ impl Mem for Process<External> {
 
         println!("kernel responded with {ret}");
         Ok(())
-    }
-    unsafe fn alter_protection(
-        &self,
-        addr: usize,
-        size: usize,
-        prot: crate::structures::protections::Protections,
-    ) -> Result<crate::structures::protections::Protections, crate::traits::MemError> {
-        let task = self.task().ok_or(ProcessError::UnableToGetTask)?;
-
-        let ret = mach::vm::mach_vm_map(
-            task,
-            addr as *mut mach_vm_address_t,
-            size as mach_vm_size_t,
-            0,
-            VM_FLAGS_ANYWHERE,
-            MACH_PORT_NULL,
-            0,
-            0,
-            prot.native(),
-            prot.native(),
-            VM_INHERIT_NONE,
-
-        );
-        println!("kernel responded with {ret}");
-        Ok(prot)
     }
 }
 
