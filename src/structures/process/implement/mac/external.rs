@@ -1,20 +1,16 @@
-use core::slice;
 use std::{ffi::CStr, marker::PhantomData};
 
-use libc::{c_int, c_void, mach_task_self, vm_address_t};
+use libc::{c_void, mach_task_self, vm_address_t};
 use mach::{
     kern_return::KERN_SUCCESS,
-    traps::{current_task, task_for_pid},
-    vm,
+    traps::{task_for_pid},
     vm_statistics::VM_FLAGS_ANYWHERE,
-    vm_types::{mach_vm_address_t, mach_vm_size_t, vm_offset_t},
+    vm_types::{mach_vm_address_t, mach_vm_size_t},
 };
-use mach::kern_return::{KERN_INVALID_ADDRESS, KERN_PROTECTION_FAILURE};
 use mach::port::MACH_PORT_NULL;
 use mach::vm_inherit::VM_INHERIT_NONE;
 
 use crate::{
-    sigscan::SigScan,
     structures::process::{External, Process, ProcessError, U32OrString},
     traits::Mem,
 };
@@ -111,6 +107,10 @@ impl Mem for Process<External> {
 
 impl Process<External> {
 
+    /// iterates through all processed to make sure your pid is valid.
+    /// this internally uses proc_listallpids, which is a kernel function.
+    /// and requires a buffer input. this buffer is 1024 i32's long.
+    /// if you have more than 1024 processes running, this could fail.
     pub fn find_by_pid(pid: u32) -> Result<Self, ProcessError> {
         let mut buf = [0i32; 1024];
         let ret = unsafe {
@@ -129,6 +129,7 @@ impl Process<External> {
             mrk: PhantomData,
         })
     }
+    /// gets the task for the process
     pub fn task(&self) -> Option<u32> {
         let mut task: u32 = 0;
         let current_task = unsafe { mach_task_self() };
@@ -138,6 +139,7 @@ impl Process<External> {
         }
         return Some(task);
     }
+    /// finds the process from a name
     pub fn find_by_name(name: &str) -> Result<Self, ProcessError> {
         let mut buf = [0i32; 1024];
         let ret = unsafe {
