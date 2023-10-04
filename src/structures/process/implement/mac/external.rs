@@ -31,7 +31,7 @@ impl Mem for Process<External> {
         size: usize,
     ) -> Result<(), crate::traits::MemError> {
         let mut sz = std::mem::zeroed();
-        let task = self.task();
+        let task = self.task().ok_or(ProcessError::UnableToGetTask)?;
         let ret = mach::vm::mach_vm_read_overwrite(
             task,
             addr as mach_vm_address_t,
@@ -50,7 +50,7 @@ impl Mem for Process<External> {
         data: *const u8,
         size: usize,
     ) -> Result<(), crate::traits::MemError> {
-        let task = self.task();
+        let task = self.task().ok_or(ProcessError::UnableToGetTask)?;
         let ret = mach::vm::mach_vm_write(task, addr as u64, data as vm_address_t, size as u32);
 
         if ret != KERN_SUCCESS {
@@ -62,10 +62,10 @@ impl Mem for Process<External> {
         &self,
         addr: Option<usize>,
         size: usize,
-        prot: crate::structures::protections::Protections,
+        _: crate::structures::protections::Protections,
     ) -> Result<usize, crate::traits::MemError> {
         let addr_ptr = addr.map(|x| x as *mut u64).unwrap_or(std::ptr::null_mut());
-        let task = self.task();
+        let task = self.task().ok_or(ProcessError::UnableToGetTask)?;
         let ret = mach::vm::mach_vm_allocate(task, addr_ptr, size as u64, VM_FLAGS_ANYWHERE);
         if ret != KERN_SUCCESS {
             return Err(crate::traits::MemError::AllocFailure(addr,size));
@@ -88,9 +88,10 @@ impl Mem for Process<External> {
         size: usize,
         prot: crate::structures::protections::Protections,
     ) -> Result<crate::structures::protections::Protections, crate::traits::MemError> {
-        let mut max_prot = 0;
+        let task = self.task().ok_or(ProcessError::UnableToGetTask)?;
+
         let ret = mach::vm::mach_vm_map(
-            self.task(),
+            task,
             addr as *mut mach_vm_address_t,
             size as mach_vm_size_t,
             0,
@@ -128,11 +129,14 @@ impl Process<External> {
             mrk: PhantomData,
         })
     }
-    pub fn task(&self) -> u32 {
+    pub fn task(&self) -> Option<u32> {
         let mut task: u32 = 0;
         let current_task = unsafe { mach_task_self() };
         let ret = unsafe { task_for_pid(current_task, self.pid as i32, &mut task) };
-        return task;
+        if ret != KERN_SUCCESS {
+            return None;
+        }
+        return Some(task);
     }
     pub fn find_by_name(name: &str) -> Result<Self, ProcessError> {
         let mut buf = [0i32; 1024];

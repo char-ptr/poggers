@@ -4,6 +4,7 @@ use std::rc::Rc;
 use thiserror::Error;
 
 use crate::{structures::{virtalloc::VirtAlloc, addr::Address}, sigscan::SigScan};
+use crate::structures::process::ProcessError;
 
 use super::structures::protections::Protections;
 
@@ -152,5 +153,9 @@ pub enum MemError {
     FreeFailure(usize, usize),
     /// unsupported function for target os
     #[error("Unsupported")]
-    Unsupported
+    Unsupported,
+    #[cfg(target_os = "macos")]
+    #[error("A Process Error Occurred: {0}")]
+    /// Unable to get task
+    ProcessError(#[from] ProcessError),
 }

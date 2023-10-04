@@ -58,6 +58,9 @@ pub enum ProcessError {
     /// the process handle could not be opened
     #[error("unable to open process: {0}")]
     UnableToOpenProcess(U32OrString),
+    #[cfg(target_os = "macos")]
+    #[error("unable to get task, are you running as root?")]
+    UnableToGetTask,
 }
 /// Either a u32 or a string
 #[derive(Debug)]
