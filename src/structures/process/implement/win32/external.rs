@@ -198,16 +198,4 @@ impl Clone for Process<External> {
         }
     }
 }
-impl TryFrom<u32> for Process<External> {
-    type Error = ProcessError;
-    fn try_from(pid: u32) -> Result<Self, Self::Error> {
-        Self::find_from_pid(pid)
-    }
-}
-impl TryFrom<&str> for Process<External> {
-    type Error = ProcessError;
-    fn try_from(name: &str) -> Result<Self, Self::Error> {
-        Self::find_by_name(name)
-    }
-}
 impl SigScan for Process<External> {}

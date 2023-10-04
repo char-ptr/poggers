@@ -104,29 +104,12 @@ impl Process<External> {
         let name = std::fs::read_to_string(format!("/proc/{}/comm",pid)).map_err(|_| ProcessError::UnableToFindProcess(U32OrString::U32(pid)))?;
         Ok(Self {
             pid,
-            name: name.trim().to_string(),
             mrk: std::marker::PhantomData
         })
     } 
-}
-impl TryFrom<u32> for Process<External> {
-    type Error = crate::structures::process::ProcessError;
-
-    fn try_from(value: u32) -> Result<Self, Self::Error> {
-        Self::find_by_pid(value)
-    }
-}
-impl TryFrom<&str> for Process<External> {
-    type Error = crate::structures::process::ProcessError;
-
-    fn try_from(value: &str) -> Result<Self, Self::Error> {
-        Self::find_by_name(value)
-    }
 }
 impl ProcessUtils for Process<External> {
     fn get_module(&self, name:&str) -> Result<crate::structures::modules::Module<Self>,crate::structures::modules::ModuleError> where Self: Sized + SigScan {
         todo!()
     }
 }
-
-impl SigScan for Process<External> {}
