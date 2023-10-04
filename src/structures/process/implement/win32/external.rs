@@ -198,4 +198,3 @@ impl Clone for Process<External> {
         }
     }
 }
-impl SigScan for Process<External> {}
