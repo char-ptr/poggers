@@ -26,7 +26,7 @@ pub enum Protections {
     INVALID,
 }
 /// Memory Protection Flags
-#[cfg(target_os = "linux")]
+#[cfg(unix)]
 #[bitfield_struct::bitfield(u8)]
 pub struct Protections {
     read: bool,
@@ -105,7 +105,7 @@ impl Display for Protections {
     }
 }
 
-#[cfg(target_os = "linux")]
+#[cfg(unix)]
 impl Protections {
     /// get u32 version of the protections
     pub fn u32(&self) -> i32 {
@@ -146,7 +146,7 @@ impl Protections {
         ret
     }
 }
-#[cfg(target_os = "linux")]
+#[cfg(unix)]
 impl Display for Protections {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "protections< ")?;

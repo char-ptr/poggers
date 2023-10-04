@@ -14,7 +14,7 @@ targets = ["x86_64-pc-windows-msvc", "x86_64-unknown-linux-gnu"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [workspace]
-members = ["poggers-derive", "rw-test"]
+members = ["poggers-derive", "rw-test","macos-libproc","macos-tests"]
 
 [profile.release]
 lto = true
@@ -40,14 +40,10 @@ windows = { version = "0.51.1", features = [
     "Win32_System_Console",
     "Win32_System_SystemServices",
 ] }
-
-[target.'cfg(target_os="linux")'.dependencies]
+[target.'cfg(unix)'.dependencies]
 libc = { version = "0.2.147" }
 bitfield-struct = { version = "0.5.2" }
-ctor = { version = "0.2.4" }
 
 [target.'cfg(target_os="macos")'.dependencies]
 mach = { version = "0.3.2" }
-
-[dev-dependencies]
-log = "0.4.20"
+macos-libproc = { path = "macos-libproc", version = "0.1.0" }

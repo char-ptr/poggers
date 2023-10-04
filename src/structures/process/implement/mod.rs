@@ -1,5 +1,7 @@
 #[cfg(windows)]
 mod win32;
+#[cfg(target_os = "macos")]
+mod mac;
 #[cfg(target_os = "linux")]
 mod linux;
 /// for internal usage
@@ -18,7 +20,7 @@ mod test {
         use std::process::Command;
         #[cfg(windows)]
         let proc = Command::new("./target/release/rw-test.exe").stdout(Stdio::piped()).spawn().unwrap();
-        #[cfg(target_os = "linux")]
+        #[cfg(unix)]
         let proc = Command::new("./target/release/rw-test").stdout(Stdio::piped()).spawn().unwrap();
         proc
     }
@@ -61,7 +63,7 @@ mod test {
         let mut bufr = String::new();
         #[cfg(windows)]
         let ex = Process::find_name("rw-test.exe").unwrap();
-        #[cfg(target_os = "linux")]
+        #[cfg(unix)]
         let ex = Process::find_by_name("rw-test").unwrap();
         
         reader.read_line(&mut bufr).ok();

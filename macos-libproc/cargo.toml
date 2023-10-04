@@ -1,6 +1,6 @@
 [package]
 name = "macos-libproc"
-version = "0.1.5"
+version = "0.1.0"
 edition = "2021"
 description = "traits for poggers"
 license = "GPL-2.0"
