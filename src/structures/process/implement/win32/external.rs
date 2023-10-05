@@ -27,6 +27,19 @@ use crate::{
 use super::super::utils::ProcessUtils;
 
 impl Mem for Process<External> {
+    unsafe fn raw_query(&self, addr: usize) -> MEMORY_BASIC_INFORMATION {
+        let mut info = MEMORY_BASIC_INFORMATION {
+            RegionSize: 0x4096,
+            ..Default::default()
+        };
+        VirtualQueryEx(
+            self.get_handle(),
+            Some(addr as *const c_void),
+            &mut info,
+            size_of::<MEMORY_BASIC_INFORMATION>(),
+        );
+        info
+    }
     unsafe fn alter_protection(
         &self,
         addr: usize,
@@ -77,7 +90,6 @@ impl Mem for Process<External> {
         )
         .map_err(|_| MemError::WriteFailure(addr))
     }
-    #[must_use = "keep the virtalloc alive to keep the memory allocated"]
     unsafe fn raw_virtual_alloc(
         &self,
         addr: Option<usize>,
@@ -100,19 +112,6 @@ impl Mem for Process<External> {
     unsafe fn raw_virtual_free(&self, addr: usize, size: usize) -> Result<(), MemError> {
         VirtualFreeEx(self.get_handle(), addr as *mut c_void, size, MEM_RELEASE)
             .map_err(|_| MemError::FreeFailure(addr, size))
-    }
-    unsafe fn raw_query(&self, addr: usize) -> MEMORY_BASIC_INFORMATION {
-        let mut info = MEMORY_BASIC_INFORMATION {
-            RegionSize: 0x4096,
-            ..Default::default()
-        };
-        VirtualQueryEx(
-            self.get_handle(),
-            Some(addr as *const c_void),
-            &mut info,
-            size_of::<MEMORY_BASIC_INFORMATION>(),
-        );
-        info
     }
 }
 impl Process<External> {
@@ -166,9 +165,6 @@ impl Process<External> {
 }
 
 impl ProcessUtils for Process<External> {
-    fn get_name(&self) -> String {
-        Self::get_name_from_hndl(HANDLE(self.handl))
-    }
     fn get_module(&self, name: &str) -> Result<Module<Self>, ModuleError>
     where
         Self: Sized + SigScan,
@@ -187,6 +183,9 @@ impl ProcessUtils for Process<External> {
             handle: res.handle.0,
             owner,
         })
+    }
+    fn get_name(&self) -> String {
+        Self::get_name_from_hndl(HANDLE(self.handl))
     }
 }
 impl Clone for Process<External> {

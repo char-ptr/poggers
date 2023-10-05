@@ -29,6 +29,19 @@ use crate::{
 use super::super::utils::ProcessUtils;
 
 impl Mem for Process<Internal> {
+    unsafe fn raw_query(&self, addr: usize) -> MEMORY_BASIC_INFORMATION {
+        let mut info = MEMORY_BASIC_INFORMATION {
+            RegionSize: 0x4096,
+            ..Default::default()
+        };
+        VirtualQuery(
+            Some(addr as *const c_void),
+            &mut info,
+            size_of::<MEMORY_BASIC_INFORMATION>(),
+        );
+        info
+    }
+
     unsafe fn alter_protection(
         &self,
         addr: usize,
@@ -56,7 +69,6 @@ impl Mem for Process<Internal> {
         (addr as *mut u8).copy_from_nonoverlapping(data, size);
         Ok(())
     }
-
     unsafe fn raw_virtual_alloc(
         &self,
         addr: Option<usize>,
@@ -83,18 +95,6 @@ impl Mem for Process<Internal> {
             Err(MemError::FreeFailure(addr, size))
         }
     }
-    unsafe fn raw_query(&self, addr: usize) -> MEMORY_BASIC_INFORMATION {
-        let mut info = MEMORY_BASIC_INFORMATION {
-            RegionSize: 0x4096,
-            ..Default::default()
-        };
-        VirtualQuery(
-            Some(addr as *const c_void),
-            &mut info,
-            size_of::<MEMORY_BASIC_INFORMATION>(),
-        );
-        info
-    }
 }
 impl Process<Internal> {
     /// constructs a process which is the current process
@@ -109,12 +109,6 @@ impl Process<Internal> {
     }
 }
 impl ProcessUtils for Process<Internal> {
-    fn get_name(&self) -> String {
-        let mut file_name = widestring::U16String::new();
-        unsafe { GetProcessImageFileNameW(HANDLE(self.handl), file_name.as_mut_slice()) };
-        file_name.to_string_lossy()
-    }
-
     fn get_module(&self, name: &str) -> Result<Module<Self>, ModuleError>
     where
         Self: Sized + SigScan,
@@ -133,7 +127,7 @@ impl ProcessUtils for Process<Internal> {
                 proc,
                 module,
                 &mut mod_info,
-                std::mem::size_of::<MODULEINFO>() as u32,
+                size_of::<MODULEINFO>() as u32,
             )
         };
         if info.is_err() {
@@ -148,6 +142,12 @@ impl ProcessUtils for Process<Internal> {
             owner: Arc::new(self.clone()),
             size: mod_info.SizeOfImage as usize,
         })
+    }
+
+    fn get_name(&self) -> String {
+        let mut file_name = widestring::U16String::new();
+        unsafe { GetProcessImageFileNameW(HANDLE(self.handl), file_name.as_mut_slice()) };
+        file_name.to_string_lossy()
     }
 }
 
