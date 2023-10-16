@@ -136,7 +136,7 @@ impl Process<External> {
         name_buf.to_string().unwrap()
     }
     /// finds the process from a pid
-    fn find_from_pid(pid: u32) -> Result<Self, ProcessError> {
+    pub fn find_from_pid(pid: u32) -> Result<Self, ProcessError> {
         let open_hndl = Self::open_handle(pid)?;
         Ok(Self {
             handl: open_hndl.0,
@@ -145,7 +145,7 @@ impl Process<External> {
         })
     }
     /// finds the process from a name
-    fn find_by_name(name: &str) -> Result<Self, ProcessError> {
+    pub fn find_by_name(name: &str) -> Result<Self, ProcessError> { // rename by or from to match possibly
         let mut snapshot = ToolSnapshot::new_process().unwrap();
         let res = snapshot.find(|process| process.exe_path == name).ok_or(
             ProcessError::UnableToFindProcess(U32OrString::String(name.to_string())),
