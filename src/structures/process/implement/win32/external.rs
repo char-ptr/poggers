@@ -145,7 +145,7 @@ impl Process<External> {
         })
     }
     /// finds the process from a name
-    pub fn find_by_name(name: &str) -> Result<Self, ProcessError> {
+    pub fn find_by_name(name: &str) -> Result<Self, ProcessError> { // rename by or from to match possibly
         let mut snapshot = ToolSnapshot::new_process().unwrap();
         let res = snapshot.find(|process| process.exe_path == name).ok_or(
             ProcessError::UnableToFindProcess(U32OrString::String(name.to_string())),
@@ -197,4 +197,3 @@ impl Clone for Process<External> {
         }
     }
 }
-
