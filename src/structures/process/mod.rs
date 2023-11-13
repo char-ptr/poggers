@@ -97,7 +97,7 @@ impl TryFrom<u32> for Process<External> {
     type Error = crate::structures::process::ProcessError;
 
     fn try_from(value: u32) -> Result<Self, Self::Error> {
-        Self::find_from_pid(value)
+        Self::find_by_pid(value)
     }
 }
 impl TryFrom<&str> for Process<External> {

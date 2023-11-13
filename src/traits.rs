@@ -4,7 +4,7 @@ use std::rc::Rc;
 use thiserror::Error;
 
 use crate::{structures::{virtalloc::VirtAlloc, addr::Address}, sigscan::SigScan};
-use crate::structures::process::ProcessError;
+
 
 use super::structures::protections::Protections;
 
