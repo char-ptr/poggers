@@ -1,5 +1,3 @@
-use std::rc::Rc;
-
 use crate::{sigscan::SigScan, traits::MemError};
 
 /// represents an address in a process
