@@ -1,13 +1,10 @@
 use crate::{
     sigscan::SigScan,
-    structures::{
-        modules::{Module, ModuleError},
-        process::ProcessBasics,
-    },
+    structures::modules::{Module, ModuleError},
 };
 
 /// utilities for processes
-pub trait ProcessUtils: ProcessBasics {
+pub trait ProcessUtils {
     /// get a module by name
     fn get_module(&self, name: &str) -> Result<Module<Self>, ModuleError>
     where

@@ -1,20 +1,21 @@
 use std::{ffi::CStr, marker::PhantomData};
 
 use libc::{c_void, mach_task_self, vm_address_t};
+use mach::port::MACH_PORT_NULL;
+use mach::vm_inherit::VM_INHERIT_NONE;
 use mach::{
     kern_return::KERN_SUCCESS,
-    traps::{task_for_pid},
+    traps::task_for_pid,
     vm_statistics::VM_FLAGS_ANYWHERE,
     vm_types::{mach_vm_address_t, mach_vm_size_t},
 };
-use mach::port::MACH_PORT_NULL;
-use mach::vm_inherit::VM_INHERIT_NONE;
 
+use crate::structures::process::Proc;
+use crate::traits::MemError::WriteFailure;
 use crate::{
     structures::process::{External, Process, ProcessError, U32OrString},
     traits::Mem,
 };
-use crate::traits::MemError::WriteFailure;
 
 // for any future maintainer : https://web.mit.edu/darwin/src/modules/xnu/osfmk/man/vm_read.html. you'll thank me
 // https://opensource.apple.com/source/xnu/xnu-4570.1.46/libsyscall/mach/mach_vm.c.auto.html
@@ -40,7 +41,6 @@ impl Mem for Process<External> {
             prot.native(),
             prot.native(),
             VM_INHERIT_NONE,
-
         );
         println!("kernel responded with {ret}");
         Ok(prot)
@@ -75,7 +75,7 @@ impl Mem for Process<External> {
         let ret = mach::vm::mach_vm_write(task, addr as u64, data as vm_address_t, size as u32);
 
         if ret != KERN_SUCCESS {
-            return Err(WriteFailure(addr))
+            return Err(WriteFailure(addr));
         }
         Ok(())
     }
@@ -89,7 +89,7 @@ impl Mem for Process<External> {
         let task = self.task().ok_or(ProcessError::UnableToGetTask)?;
         let ret = mach::vm::mach_vm_allocate(task, addr_ptr, size as u64, VM_FLAGS_ANYWHERE);
         if ret != KERN_SUCCESS {
-            return Err(crate::traits::MemError::AllocFailure(addr,size));
+            return Err(crate::traits::MemError::AllocFailure(addr, size));
         }
         Ok(addr_ptr as usize)
     }
@@ -106,12 +106,23 @@ impl Mem for Process<External> {
 }
 
 impl Process<External> {
-
+    /// gets the task for the process
+    pub fn task(&self) -> Option<u32> {
+        let mut task: u32 = 0;
+        let current_task = unsafe { mach_task_self() };
+        let ret = unsafe { task_for_pid(current_task, self.pid as i32, &mut task) };
+        if ret != KERN_SUCCESS {
+            return None;
+        }
+        return Some(task);
+    }
+}
+impl Proc for Process<External> {
     /// iterates through all processed to make sure your pid is valid.
     /// this internally uses proc_listallpids, which is a kernel function.
     /// and requires a buffer input. this buffer is 1024 i32's long.
     /// if you have more than 1024 processes running, this could fail.
-    pub fn find_by_pid(pid: u32) -> Result<Self, ProcessError> {
+    fn find_by_pid(pid: u32) -> Result<Self, ProcessError> {
         let mut buf = [0i32; 1024];
         let ret = unsafe {
             macos_libproc::proc_listallpids(buf.as_mut_ptr() as *mut c_void, buf.len() as i32)
@@ -129,18 +140,8 @@ impl Process<External> {
             mrk: PhantomData,
         })
     }
-    /// gets the task for the process
-    pub fn task(&self) -> Option<u32> {
-        let mut task: u32 = 0;
-        let current_task = unsafe { mach_task_self() };
-        let ret = unsafe { task_for_pid(current_task, self.pid as i32, &mut task) };
-        if ret != KERN_SUCCESS {
-            return None;
-        }
-        return Some(task);
-    }
     /// finds the process from a name
-    pub fn find_by_name(name: &str) -> Result<Self, ProcessError> {
+    fn find_by_name(name: &str) -> Result<Self, ProcessError> {
         let mut buf = [0i32; 1024];
         let ret = unsafe {
             macos_libproc::proc_listallpids(buf.as_mut_ptr() as *mut c_void, buf.len() as i32)

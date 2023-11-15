@@ -9,45 +9,19 @@ pub struct External;
 pub struct Internal;
 /// the type has not yet been determined
 pub struct Holding;
-/// a process on the file system
+/// a process on the operating system
 #[derive(Debug, Clone)]
 pub struct Process<T = Holding> {
     /// the current process id
     pub(crate) pid: u32,
-    /// always none on linux, some on windows. is the handle.
     #[cfg(windows)]
-    pub(crate) handl: isize,
+    /// always none on linux, some on windows. is the handle. (to get actual HANDLE, you must wrap
+    /// in HANDLE)
+    handl: isize,
     pub(crate) mrk: PhantomData<T>,
 }
 
-#[cfg(windows)]
-use windows::Win32::Foundation::HANDLE;
 use crate::sigscan::SigScan;
-
-/// base process functions
-pub trait ProcessBasics {
-    /// get the process id
-    fn get_pid(&self) -> u32;
-    /// get the process name
-    #[cfg(windows)]
-    /// get the process handle [WINDOWS ONLY]
-    fn get_handle(&self) -> HANDLE;
-}
-
-impl<T> ProcessBasics for Process<T> {
-    /// get the process id
-    #[inline(always)]
-    fn get_pid(&self) -> u32 {
-        self.pid
-    }
-    /// get the process handle
-    /// WINDOWS ONLY
-    #[cfg(windows)]
-    #[inline(always)]
-    fn get_handle(&self) -> HANDLE {
-        HANDLE(self.handl)
-    }
-}
 
 /// process errors
 #[derive(Debug, thiserror::Error)]
@@ -108,3 +82,7 @@ impl TryFrom<&str> for Process<External> {
     }
 }
 impl SigScan for Process<External> {}
+trait Proc {
+    fn find_by_name(name: &str) -> Result<Process<External>, ProcessError>;
+    fn find_by_pid(pid: u32) -> Result<Process<External>, ProcessError>;
+}

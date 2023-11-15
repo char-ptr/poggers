@@ -1,34 +1,44 @@
-#[cfg(windows)]
-mod win32;
-#[cfg(target_os = "macos")]
-mod mac;
 #[cfg(target_os = "linux")]
 mod linux;
+#[cfg(target_os = "macos")]
+mod mac;
 /// for internal usage
 pub mod utils;
-
 #[cfg(windows)]
-pub use win32::*;
+mod win32;
+
 #[cfg(target_os = "linux")]
 pub use linux::*;
 #[cfg(target_os = "macos")]
 pub use mac::*;
-
-
+#[cfg(windows)]
+pub use win32::*;
 
 #[cfg(test)]
 mod test {
-    fn spawn_test_process() -> std::process::Child{
+    fn spawn_test_process() -> std::process::Child {
         use std::process::Command;
         #[cfg(windows)]
-        let proc = Command::new("./target/release/rw-test.exe").stdout(Stdio::piped()).spawn().unwrap();
+        let proc = Command::new("./target/release/rw-test.exe")
+            .stdout(Stdio::piped())
+            .spawn()
+            .unwrap();
         #[cfg(unix)]
-        let proc = Command::new("./target/release/rw-test").stdout(Stdio::piped()).spawn().unwrap();
+        let proc = Command::new("./target/release/rw-test")
+            .stdout(Stdio::piped())
+            .spawn()
+            .unwrap();
         proc
     }
-    use std::{process::Stdio, io::{BufReader, BufRead}};
+    use std::{
+        io::{BufRead, BufReader},
+        process::Stdio,
+    };
 
-    use crate::{structures::process::Process, traits::Mem};
+    use crate::{
+        structures::process::{Proc, Process},
+        traits::Mem,
+    };
 
     #[test]
     fn test_reading() {
@@ -36,7 +46,7 @@ mod test {
         let mut reader = BufReader::new(proc.stdout.take().unwrap());
         let mut bufr = String::new();
         let ex = Process::find_pid(proc.id()).unwrap();
-        
+
         reader.read_line(&mut bufr).ok();
 
         println!("bufr: {}", bufr.trim());
@@ -51,10 +61,13 @@ mod test {
 
         reader.read_line(&mut bufr).ok();
 
-        println!("val: {}, bufr: {}", val, bufr.trim().parse::<u32>().unwrap());
-        
-        assert_eq!(val, bufr.trim().parse().unwrap());
+        println!(
+            "val: {}, bufr: {}",
+            val,
+            bufr.trim().parse::<u32>().unwrap()
+        );
 
+        assert_eq!(val, bufr.trim().parse().unwrap());
 
         proc.kill().unwrap();
     }
@@ -67,7 +80,7 @@ mod test {
         let ex = Process::find_name("rw-test.exe").unwrap();
         #[cfg(unix)]
         let ex = Process::find_by_name("rw-test").unwrap();
-        
+
         reader.read_line(&mut bufr).ok();
 
         let addr = usize::from_str_radix(bufr.trim_start_matches("0x").trim(), 16).unwrap();
@@ -77,9 +90,8 @@ mod test {
         bufr.clear();
 
         reader.read_line(&mut bufr).ok();
-        
-        assert_eq!(val, bufr.trim().parse().unwrap());
 
+        assert_eq!(val, bufr.trim().parse().unwrap());
 
         proc.kill().unwrap();
     }
@@ -89,22 +101,21 @@ mod test {
         let mut reader = BufReader::new(proc.stdout.take().unwrap());
         let mut bufr = String::new();
         let ex = Process::find_pid(proc.id()).unwrap();
-        
+
         reader.read_line(&mut bufr).ok();
 
         let addr = usize::from_str_radix(bufr.trim_start_matches("0x").trim(), 16).unwrap();
 
-        unsafe { ex.write(addr,&4141656).unwrap() };
+        unsafe { ex.write(addr, &4141656).unwrap() };
 
         reader.read_line(&mut bufr).ok();
         bufr.clear();
 
         reader.read_line(&mut bufr).ok();
-        
 
         assert_eq!(4141656, bufr.trim().parse().unwrap());
-
 
         proc.kill().unwrap();
     }
 }
+
