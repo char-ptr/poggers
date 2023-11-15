@@ -96,7 +96,7 @@ pub trait Mem {
     where
         Self: Sized + SigScan + Clone,
     {
-        Address::new(Rc::new(self.clone()), size)
+        Address::new(self, size)
     }
     /// Allocate memory to process begninning at <addr> with size <size>, needs implementation per platform
     /// This will automatically free the memory when the VirtAlloc is dropped
@@ -189,4 +189,3 @@ pub enum MemError {
     /// Unable to get task
     ProcessError(#[from] ProcessError),
 }
-
