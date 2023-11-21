@@ -2,10 +2,11 @@
 mod linux;
 #[cfg(target_os = "macos")]
 mod mac;
-/// for internal usage
-pub mod utils;
 #[cfg(windows)]
 mod win32;
+
+/// for internal usage
+pub mod utils;
 
 #[cfg(target_os = "linux")]
 pub use linux::*;
@@ -118,4 +119,3 @@ mod test {
         proc.kill().unwrap();
     }
 }
-

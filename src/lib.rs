@@ -26,12 +26,10 @@
 //! ```
 //!  use poggers::structures::process::Process;
 //!  use poggers::traits::Mem;
-//!  fn main() {
-//!     let process = Process::find_name("csgo.exe").unwrap();
-//!     unsafe {
-//!         process.write(0x1000,&1).unwrap()
-//!     }
-//! }
+//!  let process = Process::find_name("csgo.exe").unwrap();
+//!  unsafe {
+//!     process.write(0x1000,&1).unwrap()
+//!  }
 //! ```
 //!  ## Example Internal usage:
 //! ```
