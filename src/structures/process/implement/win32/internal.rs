@@ -20,7 +20,7 @@ use crate::{
     sigscan::SigScan,
     structures::{
         modules::{Module, ModuleError},
-        process::{Internal, Process, ProcessBasics},
+        process::{Internal, Process},
         protections::Protections,
     },
     traits::{Mem, MemError},
@@ -123,12 +123,7 @@ impl ProcessUtils for Process<Internal> {
         let proc = unsafe { GetCurrentProcess() };
 
         let info = unsafe {
-            GetModuleInformation(
-                proc,
-                module,
-                &mut mod_info,
-                size_of::<MODULEINFO>() as u32,
-            )
+            GetModuleInformation(proc, module, &mut mod_info, size_of::<MODULEINFO>() as u32)
         };
         if info.is_err() {
             return Err(ModuleError::UnableToOpenHandle(name.to_string()));
@@ -155,7 +150,7 @@ impl SigScan for Process<Internal> {}
 impl Clone for Process<Internal> {
     fn clone(&self) -> Self {
         Self {
-            handl: self.get_handle().0,
+            handl: self.handl,
             pid: self.pid,
             mrk: Default::default(),
         }

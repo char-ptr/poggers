@@ -18,7 +18,7 @@ use crate::{
     structures::{
         create_snapshot::ToolSnapshot,
         modules::{Module, ModuleError},
-        process::{External, Process, ProcessBasics, ProcessError, U32OrString},
+        process::{External, Process, ProcessError, U32OrString},
         protections::Protections,
     },
     traits::{Mem, MemError},
@@ -33,7 +33,7 @@ impl Mem for Process<External> {
             ..Default::default()
         };
         VirtualQueryEx(
-            self.get_handle(),
+            HANDLE(self.handl),
             Some(addr as *const c_void),
             &mut info,
             size_of::<MEMORY_BASIC_INFORMATION>(),
@@ -49,7 +49,7 @@ impl Mem for Process<External> {
         let mut old_protect = Default::default();
         unsafe {
             let Ok(_) = VirtualProtectEx(
-                self.get_handle(),
+                HANDLE(self.handl),
                 addr as *const c_void,
                 size,
                 prot.native(),
@@ -72,7 +72,7 @@ impl Mem for Process<External> {
     }
     unsafe fn raw_read(&self, addr: usize, data: *mut u8, size: usize) -> Result<(), MemError> {
         ReadProcessMemory(
-            self.get_handle(),
+            HANDLE(self.handl),
             addr as *const c_void,
             data as *mut _,
             size,
@@ -82,7 +82,7 @@ impl Mem for Process<External> {
     }
     unsafe fn raw_write(&self, addr: usize, data: *const u8, size: usize) -> Result<(), MemError> {
         WriteProcessMemory(
-            self.get_handle(),
+            HANDLE(self.handl),
             addr as *const c_void,
             data as *const _,
             size,
@@ -97,7 +97,7 @@ impl Mem for Process<External> {
         prot: Protections,
     ) -> Result<usize, MemError> {
         let alloc_ret = VirtualAllocEx(
-            self.get_handle(),
+            HANDLE(self.handl),
             addr.map(|x| x as *const c_void),
             size,
             MEM_COMMIT | MEM_RESERVE,
@@ -110,7 +110,7 @@ impl Mem for Process<External> {
         }
     }
     unsafe fn raw_virtual_free(&self, addr: usize, size: usize) -> Result<(), MemError> {
-        VirtualFreeEx(self.get_handle(), addr as *mut c_void, size, MEM_RELEASE)
+        VirtualFreeEx(HANDLE(self.handl), addr as *mut c_void, size, MEM_RELEASE)
             .map_err(|_| MemError::FreeFailure(addr, size))
     }
 }
@@ -192,10 +192,9 @@ impl ProcessUtils for Process<External> {
 impl Clone for Process<External> {
     fn clone(&self) -> Self {
         Self {
-            handl: self.get_handle().0,
+            handl: self.handl,
             pid: self.pid,
             mrk: PhantomData,
         }
     }
 }
-
