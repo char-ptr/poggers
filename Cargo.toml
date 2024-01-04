@@ -27,12 +27,12 @@ inherits = "release"
 debug = true
 
 [dependencies]
-thiserror = "1.0.49"
+thiserror = "1.0.52"
 poggers-derive = { path = "poggers-derive", version = "0.1.5" }
 
 [target.'cfg(target_os="windows")'.dependencies]
 widestring = "1.0"
-windows = { version = "0.51.1", features = [
+windows = { version = "0.52.0", features = [
   "Win32_System_Threading",
   "Win32_Foundation",
   "Win32_System_LibraryLoader",
