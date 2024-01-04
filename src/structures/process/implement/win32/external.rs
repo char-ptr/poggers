@@ -198,3 +198,17 @@ impl Clone for Process<External> {
         }
     }
 }
+
+
+#[cfg(test)]
+mod ex_test {
+    use crate::structures::process::implement::utils::ProcessUtils;
+    use crate::structures::process::Process;
+
+    #[test]
+    pub fn test_get_name() {
+        let proc = Process::this_process();
+        let proc = Process::find_by_pid(proc.get_pid()).unwrap();
+        println!("name: {}", proc.get_name());
+    }
+}

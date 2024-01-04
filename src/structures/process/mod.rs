@@ -53,7 +53,12 @@ impl Display for U32OrString {
         }
     }
 }
-
+impl<T> Process<T> {
+    /// get's the pid
+    pub fn get_pid(&self) -> u32 {
+        self.pid
+    }
+}
 impl Process<Holding> {
     /// get this current process
     pub fn this_process() -> Process<Internal> {
