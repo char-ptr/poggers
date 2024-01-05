@@ -27,7 +27,7 @@ inherits = "release"
 debug = true
 
 [dependencies]
-thiserror = "1.0.52"
+thiserror = "1.0.56"
 poggers-derive = { path = "poggers-derive", version = "0.1.5" }
 
 [target.'cfg(target_os="windows")'.dependencies]
@@ -44,9 +44,9 @@ windows = { version = "0.52.0", features = [
   "Win32_System_SystemServices",
 ] }
 [target.'cfg(unix)'.dependencies]
-libc = { version = "0.2.147" }
+libc = { version = "0.2" }
 bitfield-struct = { version = "0.5.2" }
-ctor = "0.2.5"
+ctor = "0.2.6"
 
 [target.'cfg(target_os="macos")'.dependencies]
 mach = { version = "0.3.2" }

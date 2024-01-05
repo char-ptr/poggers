@@ -4,6 +4,7 @@ use std::{path::PathBuf, sync::Arc};
 
 use crate::sigscan::SigScan;
 /// represents a module in a process
+#[derive(Debug)]
 pub struct Module<T: SigScan> {
     pub(crate) name: Arc<String>,
     pub(crate) path: Arc<PathBuf>,
@@ -23,11 +24,11 @@ impl<T: SigScan> Module<T> {
         &self.name
     }
     /// Get the base address of the module
-    pub fn get_base_address(&self) -> usize {
+    pub const fn get_base_address(&self) -> usize {
         self.base_address
     }
     /// Get the end address of the module
-    pub fn get_end_address(&self) -> usize {
+    pub const fn get_end_address(&self) -> usize {
         self.end_address
     }
     /// get path of the module
@@ -35,12 +36,12 @@ impl<T: SigScan> Module<T> {
         &self.path
     }
     /// Get the size of the module
-    pub fn get_size(&self) -> usize {
+    pub const fn get_size(&self) -> usize {
         self.size
     }
     #[cfg(windows)]
     /// Get the handle of the module
-    pub fn get_handle(&self) -> HANDLE {
+    pub const fn get_handle(&self) -> HANDLE {
         HANDLE(self.handle)
     }
     /// Get the owner of the module
@@ -59,3 +60,4 @@ pub enum ModuleError {
     #[error("unable to open handle for '{0}'")]
     UnableToOpenHandle(String),
 }
+

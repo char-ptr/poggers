@@ -1,7 +1,11 @@
 use std::{ffi::c_void, marker::PhantomData, mem::size_of, path::PathBuf, sync::Arc};
+use std::path::Path;
+use std::ptr::{null, null_mut};
+use widestring::{U16CString, U16String};
+use windows::core::{PCSTR, PWSTR};
 
 use windows::Win32::{
-    Foundation::HANDLE,
+    Foundation::{GetLastError, HANDLE},
     System::{
         Diagnostics::Debug::{ReadProcessMemory, WriteProcessMemory},
         Memory::{
@@ -12,6 +16,9 @@ use windows::Win32::{
         Threading::{OpenProcess, PROCESS_ALL_ACCESS},
     },
 };
+use windows::Win32::System::LibraryLoader::GetModuleHandleA;
+use windows::Win32::System::ProcessStatus::GetProcessImageFileNameW;
+use windows::Win32::System::Threading::{PROCESS_NAME_WIN32, QueryFullProcessImageNameW};
 
 use crate::{
     sigscan::SigScan,
@@ -131,9 +138,16 @@ impl Process<External> {
     }
 
     fn get_name_from_hndl(hndl: HANDLE) -> String {
-        let mut name_buf = widestring::U16String::new();
-        unsafe { GetModuleFileNameExW(hndl, None, name_buf.as_mut_slice()) };
-        name_buf.to_string().unwrap()
+        let mut name_buf = [0u16; 256];
+        let mut write_size = name_buf.len() as u32;
+        let pwstr = PWSTR::from_raw(name_buf.as_mut_ptr());
+        let code = unsafe { QueryFullProcessImageNameW(hndl,PROCESS_NAME_WIN32, pwstr,&mut write_size) };
+        println!("{code:?} - {:?}",name_buf);
+        let str = unsafe {
+            pwstr
+            .to_string().unwrap()
+        };
+        Path::new(&str).file_name().unwrap().to_string_lossy().to_string()
     }
     /// finds the process from a pid
     pub fn find_by_pid(pid: u32) -> Result<Self, ProcessError> {
@@ -175,6 +189,7 @@ impl ProcessUtils for Process<External> {
             .find(|module| module.name == name)
             .ok_or(ModuleError::NoModuleFound(name.to_string()))?;
         let owner = Arc::new(self.clone());
+
         Ok(Module {
             base_address: res.base_address,
             size: res.size,
@@ -196,19 +211,5 @@ impl Clone for Process<External> {
             pid: self.pid,
             mrk: PhantomData,
         }
-    }
-}
-
-
-#[cfg(test)]
-mod ex_test {
-    use crate::structures::process::implement::utils::ProcessUtils;
-    use crate::structures::process::Process;
-
-    #[test]
-    pub fn test_get_name() {
-        let proc = Process::this_process();
-        let proc = Process::find_by_pid(proc.get_pid()).unwrap();
-        println!("name: {}", proc.get_name());
     }
 }

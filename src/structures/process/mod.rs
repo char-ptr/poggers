@@ -4,10 +4,13 @@ pub mod implement;
 use std::{fmt::Display, marker::PhantomData};
 
 /// represents the process is external
+#[derive(Debug)]
 pub struct External;
 /// represents the process is internal
+#[derive(Debug)]
 pub struct Internal;
 /// the type has not yet been determined
+#[derive(Debug)]
 pub struct Holding;
 /// a process on the operating system
 #[derive(Debug, Clone)]

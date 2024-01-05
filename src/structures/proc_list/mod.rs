@@ -2,15 +2,15 @@ pub mod implement;
 struct ProcessList(Box<[ProcessListEntry]>);
 struct ProcessListEntry {
     pub pid: u32,
-    //pd: PlatformData,
+    // pd: PlatformData,
 }
-impl std::ops::Deref for ProcessListEntry {
+/*impl std::ops::Deref for ProcessListEntry {
     type Target = PlatformData;
 
     fn deref(&self) -> &Self::Target {
         &self.pd
     }
-}
+}*/
 #[cfg(target_os = "macos")]
 struct PlatformData;
 #[cfg(windows)]
