@@ -182,7 +182,7 @@ pub enum MemError {
     /// unsupported function for target os
     #[error("Unsupported")]
     Unsupported,
-    #[cfg(target_os = "macos")]
+    // @todo(pozm): this needs to go and be replaced
     #[error("A Process Error Occurred: {0}")]
     /// Unable to get task
     ProcessError(#[from] ProcessError),

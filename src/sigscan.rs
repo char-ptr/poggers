@@ -4,13 +4,13 @@ use super::traits::Mem;
 /// Requires the [`Mem`] trait to be implemented.
 /// # Functions
 /// * [`Self::scan`] will read for each byte in the size
-/// * [`Self::scan_batch`] will take a vector of a page and will not make additional read calls (better for external.)
+/// * [`Self::scan_batch_value`] scan for a value instead of a signature (not really recommended
+/// unless u know what you are doing)
 pub trait SigScan: Mem {
     /// Scans for a pattern in the process.
     /// # Arguments
     /// * `pattern` - The pattern to scan for.
-    /// * `from` - The address to start scanning from.
-    /// * `size` - The size of the region to scan.
+    /// * `iter` the iterator to scan
     /// # Returns
     /// * [Option<usize>] - The address which has been found.
     fn scan<'a>(&self, pattern: &str, iter: impl Iterator<Item = &'a u8>) -> Option<usize> {
@@ -26,7 +26,7 @@ pub trait SigScan: Mem {
                 ' ' => continue,
                 _ => {
                     let charpt = &pattern[i..i + 2];
-                    let byte = u8::from_str_radix(charpt, 16).unwrap();
+                    let byte = u8::from_str_radix(charpt, 16).ok()?;
                     compiled_pattern.push(byte);
                     skip = true;
                 }

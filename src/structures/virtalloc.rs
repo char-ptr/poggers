@@ -35,3 +35,4 @@ impl<'a, T: Mem> Drop for VirtAlloc<'a, T> {
         self.intrl_free();
     }
 }
+

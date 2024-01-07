@@ -1,4 +1,7 @@
-use super::create_snapshot;
+use super::{
+    create_snapshot,
+    process::{External, Process},
+};
 
 /// OS specific implementations of [ProcList]
 pub mod implement;
@@ -59,4 +62,10 @@ pub trait ProcList {
     }
     /// get an iterator of [ProcessListEntry] from the current system
     fn get_iter() -> Result<impl Iterator<Item = ProcessListEntry>, ProcListError>;
+}
+impl ProcessListEntry {
+    /// converts the process list entry into a process
+    pub fn upgrade(&self) -> Result<Process<External>, crate::structures::process::ProcessError> {
+        Process::find_pid(self.pid)
+    }
 }
