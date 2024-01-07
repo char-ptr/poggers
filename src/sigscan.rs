@@ -3,8 +3,8 @@ use super::traits::Mem;
 /// # Notes
 /// Requires the [`Mem`] trait to be implemented.
 /// # Functions
-/// * [`Self::scan`] will read for each byte in the size
-/// * [`Self::scan_batch_value`] scan for a value instead of a signature (not really recommended
+/// * [`SigScan::scan`] will read for each byte in the size
+/// * [`SigScan::scan_batch_value`] scan for a value instead of a signature (not really recommended
 /// unless u know what you are doing)
 pub trait SigScan: Mem {
     /// Scans for a pattern in the process.
