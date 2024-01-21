@@ -1,4 +1,3 @@
-use std::arch::asm;
 use std::time::Duration;
 static mut STAT_VAL: i32 = 0x7116491;
 

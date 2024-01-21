@@ -36,10 +36,7 @@ mod test {
         process::Stdio,
     };
 
-    use crate::{
-        structures::process::{Proc, Process},
-        traits::Mem,
-    };
+    use crate::{structures::process::Process, traits::Mem};
 
     #[test]
     fn test_reading() {

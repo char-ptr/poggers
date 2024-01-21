@@ -1,6 +1,6 @@
 use crate::structures::{
     create_snapshot,
-    proc_list::{PlatformData, ProcList, ProcessList},
+    proc_list::{ProcList, ProcessList},
 };
 
 impl ProcList for ProcessList {
@@ -13,4 +13,3 @@ impl ProcList for ProcessList {
             .map(|i| crate::structures::proc_list::ProcessListEntry { pid: i.id, pd: i }))
     }
 }
-

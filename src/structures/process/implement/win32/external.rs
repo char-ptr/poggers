@@ -1,21 +1,16 @@
 use std::path::Path;
-use std::ptr::{null, null_mut};
 use std::{ffi::c_void, marker::PhantomData, mem::size_of, path::PathBuf, sync::Arc};
-use widestring::{U16CString, U16String};
-use windows::core::{PCSTR, PWSTR};
+use windows::core::PWSTR;
 
-use windows::Win32::System::LibraryLoader::GetModuleHandleA;
-use windows::Win32::System::ProcessStatus::GetProcessImageFileNameW;
 use windows::Win32::System::Threading::{QueryFullProcessImageNameW, PROCESS_NAME_WIN32};
 use windows::Win32::{
-    Foundation::{GetLastError, HANDLE},
+    Foundation::HANDLE,
     System::{
         Diagnostics::Debug::{ReadProcessMemory, WriteProcessMemory},
         Memory::{
             VirtualAllocEx, VirtualFreeEx, VirtualProtectEx, VirtualQueryEx,
             MEMORY_BASIC_INFORMATION, MEM_COMMIT, MEM_RELEASE, MEM_RESERVE,
         },
-        ProcessStatus::GetModuleFileNameExW,
         Threading::{OpenProcess, PROCESS_ALL_ACCESS},
     },
 };
@@ -141,7 +136,7 @@ impl Process<External> {
         let mut name_buf = [0u16; 256];
         let mut write_size = name_buf.len() as u32;
         let pwstr = PWSTR::from_raw(name_buf.as_mut_ptr());
-        let code =
+        let _ =
             unsafe { QueryFullProcessImageNameW(hndl, PROCESS_NAME_WIN32, pwstr, &mut write_size) };
         let str = unsafe { pwstr.to_string().unwrap() };
         Path::new(&str)
