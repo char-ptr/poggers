@@ -1,7 +1,5 @@
-use super::{
-    create_snapshot,
-    process::{External, Process},
-};
+use self::implement::PlatformData;
+use super::process::{External, Process};
 
 /// OS specific implementations of [ProcList]
 pub mod implement;
@@ -28,15 +26,6 @@ impl std::ops::Deref for ProcessListEntry {
         &self.pd
     }
 }
-#[cfg(target_os = "linux")]
-/// standard platform data
-pub struct PlatformData;
-#[cfg(target_os = "macos")]
-/// standard platform data
-pub struct PlatformData;
-#[cfg(windows)]
-type PlatformData = create_snapshot::STProcess;
-
 #[derive(Debug, thiserror::Error)]
 /// errors that can occur when getting a process list
 pub enum ProcListError {

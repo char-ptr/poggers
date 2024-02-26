@@ -3,6 +3,8 @@ use crate::structures::{
     proc_list::{ProcList, ProcessList},
 };
 
+pub type PlatformData = super::create_snapshot::STProcess;
+
 impl ProcList for ProcessList {
     fn get_iter() -> Result<
         impl Iterator<Item = crate::structures::proc_list::ProcessListEntry>,

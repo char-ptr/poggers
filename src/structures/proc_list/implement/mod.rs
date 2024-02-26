@@ -1,3 +1,8 @@
+#[cfg(target_os = "linux")]
+mod linux;
+
+#[cfg(target_os = "linux")]
+pub use linux::*;
 #[cfg(target_os = "macos")]
 mod mac;
 
@@ -5,7 +10,10 @@ mod mac;
 pub use mac::*;
 
 #[cfg(target_os = "windows")]
-mod win32;
+mod windows;
+
+#[cfg(target_os = "windows")]
+pub use windows::*;
 
 #[cfg(test)]
 mod tests {

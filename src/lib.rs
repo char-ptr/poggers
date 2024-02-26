@@ -26,7 +26,7 @@
 //! ```
 //!  use poggers::structures::process::Process;
 //!  use poggers::traits::Mem;
-//!  let process = Process::find_name("csgo.exe").unwrap();
+//!  let process = Process::find_name("csgo.exe")?;
 //!  unsafe {
 //!     process.write(0x1000,&1).unwrap()
 //!  }
@@ -42,7 +42,7 @@
 //! fn entry() {
 //!     let this_proc = Process::this_process();
 //!     unsafe {
-//!         let bleh : i32 = this_proc.read(0x1000).unwrap();
+//!         let bleh : i32 = this_proc.read(0x1000).?;
 //!         println!("{}",bleh);
 //!         let base_mod_name = this_proc.get_base_module().unwrap().get_name();
 //!         println!("{}",base_mod_name);

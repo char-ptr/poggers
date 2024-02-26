@@ -51,7 +51,7 @@ windows = { version = "0.52.0", features = [
 ] }
 [target.'cfg(unix)'.dependencies]
 libc = { version = "0.2" }
-bitfield-struct = { version = "0.5.2" }
+bitfield-struct = { version = "0.6" }
 ctor = "0.2.6"
 
 [target.'cfg(target_os="macos")'.dependencies]
