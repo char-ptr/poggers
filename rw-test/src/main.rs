@@ -1,5 +1,5 @@
 use std::time::Duration;
-static mut STAT_VAL: i32 = 0x7116491;
+static STAT_VAL: i32 = 0x7116491;
 
 fn main() {
     unsafe {
@@ -17,7 +17,7 @@ fn main() {
                 inout("rax") _test,
             }
             #[cfg(target_arch = "aarch64")]
-            asm! {
+            std::arch::asm! {
                 "add w1, 591754",
                 inout("w1") _test,
             }

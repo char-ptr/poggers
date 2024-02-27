@@ -48,6 +48,7 @@ impl Parse for CreateEntryArguments {
 pub fn create_entry(attr: TokenStream, item: TokenStream) -> TokenStream {
     let input = parse_macro_input!(item as ItemFn);
     let inputb = input.clone();
+    #[cfg(target_os = "windows")]
     let arg = parse_macro_input!(attr as CreateEntryArguments);
     let input_name = input.sig.ident;
     let has_hmd = !input.sig.inputs.is_empty();
@@ -80,6 +81,7 @@ pub fn create_entry(attr: TokenStream, item: TokenStream) -> TokenStream {
         }
     };
 
+    #[cfg(target_os = "windows")]
     let alloc_console = if arg.no_console {
         quote! {}
     } else {
@@ -89,6 +91,7 @@ pub fn create_entry(attr: TokenStream, item: TokenStream) -> TokenStream {
             };
         }
     };
+    #[cfg(target_os = "windows")]
     let free_console = if arg.no_console || arg.no_free {
         quote! {}
     } else {
@@ -108,9 +111,7 @@ pub fn create_entry(attr: TokenStream, item: TokenStream) -> TokenStream {
         }
     };
     let cross_platform = quote! {
-        use ::std::panic;
-
-        match panic::catch_unwind(move || #call_main) {
+        match ::std::panic::catch_unwind(move || #call_main) {
             Err(e) => {
                 println!("`{}` has panicked: {:#?}",stringify!{#input_name}, e);
             }
@@ -118,6 +119,7 @@ pub fn create_entry(attr: TokenStream, item: TokenStream) -> TokenStream {
         };
     };
 
+    #[cfg(target_os = "windows")]
     let thread_spawn = if arg.no_thread {
         quote! {#alloc_console;#cross_platform;#free_console}
     } else {
