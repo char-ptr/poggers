@@ -1,17 +1,16 @@
 /// implementation for modules
 pub mod implement;
-use std::{path::PathBuf, sync::Arc};
+use std::{path::Path, sync::Arc};
 
 use crate::sigscan::SigScan;
 /// represents a module in a process
 #[derive(Debug)]
 pub struct Module<T: SigScan> {
-    pub(crate) name: Arc<String>,
-    pub(crate) path: Arc<PathBuf>,
+    pub(crate) name: Arc<str>,
+    pub(crate) path: Arc<Path>,
     pub(crate) base_address: usize,
     pub(crate) end_address: usize,
     pub(crate) size: usize,
-    #[cfg(windows)]
     pub(crate) handle: isize,
     pub(crate) owner: Arc<T>,
 }
@@ -32,12 +31,17 @@ impl<T: SigScan> Module<T> {
         self.end_address
     }
     /// get path of the module
-    pub fn get_path(&self) -> &PathBuf {
+    pub fn get_path(&self) -> &Path {
         &self.path
     }
     /// Get the size of the module
     pub const fn get_size(&self) -> usize {
         self.size
+    }
+    #[cfg(not(windows))]
+    /// Get the handle of the module
+    pub const fn get_handle(&self) -> ! {
+        panic!("Module handles are not supported on this platform")
     }
     #[cfg(windows)]
     /// Get the handle of the module
@@ -60,4 +64,3 @@ pub enum ModuleError {
     #[error("unable to open handle for '{0}'")]
     UnableToOpenHandle(String),
 }
-
