@@ -1,0 +1,57 @@
+[package]
+name = "poggers"
+version = "1.1.7"
+edition = "2021"
+description = "memory lib"
+license = "GPL-2.0"
+authors = ["luna <luna@aixeria.com>", "VilotStar <macbookairuser12@priest.com>"]
+repository = "https://github.com/pozm/poggers"
+readme = "README.md"
+categories = [
+  "os::windows-apis",
+  "os::macos-apis",
+  "os::linux-apis",
+  "development-tools::ffi",
+  "memory-management",
+]
+[package.metadata.docs.rs]
+targets = [
+  "x86_64-pc-windows-msvc",
+  "x86_64-unknown-linux-gnu",
+  "aarch64-apple-darwin",
+]
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[profile.release]
+lto = true
+
+[profile.relbug]
+inherits = "release"
+debug = true
+
+[dependencies]
+thiserror = "1.0.56"
+# poggers-derive = { path = "poggers-derive", version = "0.1.5" }
+
+[target.'cfg(target_os="windows")'.dependencies]
+widestring = "1.0"
+windows = { version = "0.54.0", features = [
+  "Win32_System_Threading",
+  "Win32_Foundation",
+  "Win32_System_LibraryLoader",
+  "Win32_System_Diagnostics_ToolHelp",
+  "Win32_System_Diagnostics_Debug",
+  "Win32_System_Memory",
+  "Win32_System_ProcessStatus",
+  "Win32_System_Console",
+  "Win32_System_SystemServices",
+] }
+[target.'cfg(unix)'.dependencies]
+libc = { version = "0.2" }
+bitfield-struct = { version = "0.6" }
+ctor = "0.2.6"
+
+[target.'cfg(target_os="macos")'.dependencies]
+mach = { version = "0.3.2" }
+macos-libproc = { path = "../macos-libproc", version = "0.1.0" }
