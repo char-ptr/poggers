@@ -3,7 +3,8 @@ use crate::structures::{
     proc_list::{ProcList, ProcessList},
 };
 
-pub type PlatformData = super::create_snapshot::STProcess;
+/// The platform specific data for a process
+pub type PlatformData = create_snapshot::STProcess;
 
 impl ProcList for ProcessList {
     fn get_iter() -> Result<

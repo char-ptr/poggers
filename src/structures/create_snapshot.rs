@@ -92,15 +92,19 @@ impl Iterator for ToolSnapshot<STModule> {
             unsafe {
                 if Module32First(self.handle, &mut lpme).is_ok() {
                     self.first_complete = true;
+                    let proc_name =
+                        std::slice::from_raw_parts(lpme.szModule.as_ptr() as *const u8, 256);
+                    let proc_path =
+                        std::slice::from_raw_parts(lpme.szExePath.as_ptr() as *const u8, 260);
                     Some(STModule {
                         process_id: lpme.th32ProcessID,
                         base_address: lpme.modBaseAddr as usize,
                         size: lpme.modBaseSize as usize,
-                        name: CStr::from_bytes_until_nul(lpme.szModule.as_slice())
+                        name: CStr::from_bytes_until_nul(proc_name)
                             .unwrap()
                             .to_string_lossy()
                             .to_string(),
-                        exe_path: CStr::from_bytes_until_nul(lpme.szExePath.as_slice())
+                        exe_path: CStr::from_bytes_until_nul(proc_path)
                             .unwrap()
                             .to_string_lossy()
                             .to_string(),
@@ -113,15 +117,19 @@ impl Iterator for ToolSnapshot<STModule> {
         } else {
             unsafe {
                 if Module32Next(self.handle, &mut lpme).is_ok() {
+                    let proc_name =
+                        std::slice::from_raw_parts(lpme.szModule.as_ptr() as *const u8, 256);
+                    let proc_path =
+                        std::slice::from_raw_parts(lpme.szExePath.as_ptr() as *const u8, 260);
                     Some(STModule {
                         process_id: lpme.th32ProcessID,
                         base_address: lpme.modBaseAddr as usize,
                         size: lpme.modBaseSize as usize,
-                        name: CStr::from_bytes_until_nul(lpme.szModule.as_slice())
+                        name: CStr::from_bytes_until_nul(proc_name)
                             .unwrap()
                             .to_string_lossy()
                             .to_string(),
-                        exe_path: CStr::from_bytes_until_nul(lpme.szExePath.as_slice())
+                        exe_path: CStr::from_bytes_until_nul(proc_path)
                             .unwrap()
                             .to_string_lossy()
                             .to_string(),
@@ -158,11 +166,13 @@ impl Iterator for ToolSnapshot<STProcess> {
             unsafe {
                 if Process32First(self.handle, &mut lppe).is_ok() {
                     self.first_complete = true;
+                    let mod_path =
+                        std::slice::from_raw_parts(lppe.szExeFile.as_ptr() as *const u8, 260);
                     Some(STProcess {
                         id: lppe.th32ProcessID,
                         thread_count: lppe.cntThreads,
                         parent_id: lppe.th32ParentProcessID,
-                        exe_path: CStr::from_bytes_until_nul(lppe.szExeFile.as_slice())
+                        exe_path: CStr::from_bytes_until_nul(mod_path)
                             .unwrap()
                             .to_string_lossy()
                             .to_string(),
@@ -174,11 +184,13 @@ impl Iterator for ToolSnapshot<STProcess> {
         } else {
             unsafe {
                 if Process32Next(self.handle, &mut lppe).is_ok() {
+                    let mod_path =
+                        std::slice::from_raw_parts(lppe.szExeFile.as_ptr() as *const u8, 260);
                     Some(STProcess {
                         id: lppe.th32ProcessID,
                         thread_count: lppe.cntThreads,
                         parent_id: lppe.th32ParentProcessID,
-                        exe_path: CStr::from_bytes_until_nul(lppe.szExeFile.as_slice())
+                        exe_path: CStr::from_bytes_until_nul(mod_path)
                             .unwrap()
                             .to_string_lossy()
                             .to_string(),
