@@ -27,11 +27,12 @@ use crate::{
 };
 
 use super::super::utils::ProcessUtils;
+use super::WIN_PAGE_SIZE;
 
 impl Mem for Process<External> {
     unsafe fn raw_query(&self, addr: usize) -> MEMORY_BASIC_INFORMATION {
         let mut info = MEMORY_BASIC_INFORMATION {
-            RegionSize: 0x4096,
+            RegionSize: WIN_PAGE_SIZE,
             ..Default::default()
         };
         VirtualQueryEx(

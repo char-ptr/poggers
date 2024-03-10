@@ -20,15 +20,15 @@ where
                     addr += query.RegionSize;
                     continue;
                 }
-                let mut page = [0u8; 0x4096];
-                owner.raw_read(addr, &mut page as *mut u8, 0x4096)?;
+                let mut page = [0u8; WIN_PAGE_SIZE];
+                owner.raw_read(addr, &mut page as *mut u8, WIN_PAGE_SIZE)?;
                 let scan_res = owner.scan(pattern, page.iter());
 
                 if let Some(result) = scan_res {
                     println!("Found pattern at {:#x}", scan_res.unwrap());
                     return Ok(Some(addr + result));
                 }
-                addr += 0x4096_usize;
+                addr += WIN_PAGE_SIZE;
             }
         }
         Ok(None)
@@ -46,19 +46,19 @@ where
                     addr += query.RegionSize;
                     continue;
                 }
-                let mut page = [0u8; 0x4096];
+                let mut page = [0u8; WIN_PAGE_SIZE];
                 self.get_owner()
-                    .raw_read(addr, &mut page as *mut u8, 0x4096)?;
+                    .raw_read(addr, &mut page as *mut u8, WIN_PAGE_SIZE)?;
                 let scan_res = self.get_owner().scan_batch_value(val, &page);
 
                 if let Some(result) = scan_res {
                     println!("Found pattern at {:#x}", scan_res.unwrap());
                     return Ok(Some(addr + result));
                 }
-                addr += 0x4096_usize;
+                addr += WIN_PAGE_SIZE;
             }
         }
         Ok(None)
     }
 }
-
+pub(super) const WIN_PAGE_SIZE: usize = 0x1000;
