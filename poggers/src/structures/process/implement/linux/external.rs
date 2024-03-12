@@ -1,4 +1,5 @@
 use libc::{__errno_location, c_void, process_vm_readv, process_vm_writev};
+use tracing::instrument;
 
 use crate::{
     sigscan::SigScan,
@@ -100,6 +101,7 @@ impl Mem for Process<External> {
 }
 impl Process<External> {
     /// find a process by name
+    #[instrument]
     pub fn find_by_name(name: &str) -> Result<Self, crate::structures::process::ProcessError> {
         let dir = std::fs::read_dir("/proc/").map_err(|_| {
             ProcessError::UnableToFindProcess(U32OrString::String(name.to_string()))
@@ -130,6 +132,7 @@ impl Process<External> {
         )))
     }
     /// find a process by pid
+    #[instrument]
     pub fn find_by_pid(pid: u32) -> Result<Self, crate::structures::process::ProcessError> {
         let Ok(f) = std::fs::File::open(format!("/proc/{}/comm", pid)) else {
             return Err(ProcessError::UnableToFindProcess(U32OrString::U32(pid)));
@@ -138,6 +141,7 @@ impl Process<External> {
         Self::new(pid)
     }
 
+    #[instrument]
     fn new(pid: u32) -> Result<Self, crate::structures::process::ProcessError> {
         let name = std::fs::read_to_string(format!("/proc/{}/comm", pid))
             .map_err(|_| ProcessError::UnableToFindProcess(U32OrString::U32(pid)))?;
@@ -148,9 +152,11 @@ impl Process<External> {
     }
 }
 impl ProcessUtils for Process<External> {
+    #[instrument]
     fn get_name(&self) -> String {
         std::fs::read_to_string(format!("/proc/{}/comm", self.pid)).unwrap()
     }
+    #[instrument]
     fn get_module(
         &self,
         name: &str,

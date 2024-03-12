@@ -62,6 +62,7 @@ pub mod exports;
 pub mod sigscan;
 /// Structures which may be used cross platform.
 pub mod structures;
+#[cfg(test)]
+pub(crate) mod testing;
 /// Holder of main traits, primarily [`Mem`](traits::Mem)
 pub mod traits;
-// struct Temp;

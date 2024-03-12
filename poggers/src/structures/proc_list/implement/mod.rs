@@ -17,11 +17,15 @@ pub use windows::*;
 
 #[cfg(test)]
 mod tests {
+    use tracing_subscriber::{layer::SubscriberExt, Registry};
+    use tracing_tree::HierarchicalLayer;
+
     use crate::structures::proc_list::{ProcList, ProcessList};
 
     #[test]
     fn test_list() {
+        crate::testing::init_tracing();
         let list = ProcessList::get_list().unwrap();
-        println!("{:#?}", list);
+        // println!("{:#?}", list);
     }
 }

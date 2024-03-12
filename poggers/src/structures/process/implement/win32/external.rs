@@ -178,6 +178,7 @@ impl Process<External> {
 
 //@TODO: (WINDOWS) need to update some fields.
 impl ProcessUtils for Process<External> {
+    #[instrument]
     fn get_module(&self, name: &str) -> Result<Module<Self>, ModuleError>
     where
         Self: Sized + SigScan,
@@ -198,6 +199,7 @@ impl ProcessUtils for Process<External> {
             owner,
         })
     }
+    #[instrument]
     fn get_name(&self) -> String {
         Self::get_name_from_hndl(HANDLE(self.handl))
     }

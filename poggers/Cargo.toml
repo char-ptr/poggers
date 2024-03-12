@@ -21,6 +21,18 @@ targets = [
   "aarch64-apple-darwin",
 ]
 
+[features]
+default = ["processes", "module", "internal", "external", "snapshot"]
+snapshot = []
+processes = []
+module = []
+internal = []
+external = []
+tracing-sub = []
+tracing-off = ["tracing-off-debug", "tracing-off-release"]
+tracing-off-debug = ["tracing/max_level_off"]
+tracing-off-release = ["tracing/release_max_level_off"]
+
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [profile.release]
@@ -29,10 +41,12 @@ lto = true
 [profile.relbug]
 inherits = "release"
 debug = true
-
+[dev-dependencies]
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+tracing-tree = { version = "*" }
 [dependencies]
-thiserror = "1.0.56"
-# poggers-derive = { path = "poggers-derive", version = "0.1.5" }
+thiserror = "1.0.58"
+tracing = { version = "0.1.40" }
 
 [target.'cfg(target_os="windows")'.dependencies]
 widestring = "1.0"

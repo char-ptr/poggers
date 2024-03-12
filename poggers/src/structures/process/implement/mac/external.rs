@@ -107,6 +107,7 @@ impl Mem for Process<External> {
 
 impl Process<External> {
     /// gets the task for the process
+    #[instrument]
     pub fn task(&self) -> Option<u32> {
         let mut task: u32 = 0;
         let current_task = unsafe { mach_task_self() };
@@ -122,6 +123,7 @@ impl Proc for Process<External> {
     /// this internally uses proc_listallpids, which is a kernel function.
     /// and requires a buffer input. this buffer is 1024 i32's long.
     /// if you have more than 1024 processes running, this could fail.
+    #[instrument]
     fn find_by_pid(pid: u32) -> Result<Self, ProcessError> {
         let mut buf = [0i32; 1024];
         let ret = unsafe {
@@ -141,6 +143,7 @@ impl Proc for Process<External> {
         })
     }
     /// finds the process from a name
+    #[instrument]
     fn find_by_name(name: &str) -> Result<Self, ProcessError> {
         let mut buf = [0i32; 1024];
         let ret = unsafe {
