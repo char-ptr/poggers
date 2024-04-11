@@ -1,4 +1,9 @@
-use std::{ffi::c_void, mem::size_of, path::PathBuf, sync::Arc};
+use std::{
+    ffi::c_void,
+    mem::size_of,
+    path::{Path, PathBuf},
+    sync::Arc,
+};
 
 use windows::{
     core::PCWSTR,
@@ -132,8 +137,8 @@ impl ProcessUtils for Process<Internal> {
             base_address: module.0 as usize,
             handle: module.0,
             end_address: (module.0 + mod_info.SizeOfImage as isize) as usize,
-            name: Arc::new(name.to_string()),
-            path: Arc::new(PathBuf::from(name)),
+            name: Arc::from(name),
+            path: Arc::from(Path::new(name)),
             owner: Arc::new(self.clone()),
             size: mod_info.SizeOfImage as usize,
         })

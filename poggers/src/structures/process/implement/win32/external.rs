@@ -1,5 +1,6 @@
 use std::path::Path;
 use std::{ffi::c_void, marker::PhantomData, mem::size_of, path::PathBuf, sync::Arc};
+use tracing::instrument;
 use windows::core::PWSTR;
 
 use windows::Win32::System::Threading::{QueryFullProcessImageNameW, PROCESS_NAME_WIN32};
@@ -193,8 +194,8 @@ impl ProcessUtils for Process<External> {
             base_address: res.base_address,
             size: res.size,
             end_address: res.base_address + res.size,
-            path: Arc::new(PathBuf::from(res.exe_path)),
-            name: Arc::new(res.name),
+            path: Arc::from(Path::new(&res.exe_path)),
+            name: Arc::from(res.name.as_ref()),
             handle: res.handle.0,
             owner,
         })
