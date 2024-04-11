@@ -1,7 +1,10 @@
 use std::ffi::{c_void, CStr, CString};
 
+#[cfg(target_os = "macos")]
 use macos_libproc::proc_name;
 
+fn main() {}
+#[cfg(target_os = "macos")]
 fn main() {
     let timer = std::time::Instant::now();
     let buf = [0i32; 1024];
