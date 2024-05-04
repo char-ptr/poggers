@@ -1,3 +1,5 @@
+use tracing::instrument;
+
 use crate::{
     sigscan::SigScan,
     structures::{
@@ -86,7 +88,7 @@ impl Process<Internal> {
     }
 }
 impl SigScan for Process<Internal> {}
-impl ProcessUtils for Process<External> {
+impl ProcessUtils for Process<Internal> {
     #[instrument]
     fn get_name(&self) -> String {
         std::fs::read_to_string("/proc/self/comm").unwrap()
