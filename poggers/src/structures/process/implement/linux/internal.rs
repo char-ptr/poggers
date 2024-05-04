@@ -1,7 +1,7 @@
 use crate::{
     sigscan::SigScan,
     structures::{
-        process::{Internal, Process},
+        process::{implement::utils::ProcessUtils, External, Internal, Process},
         protections::Protections,
     },
     traits::Mem,
@@ -86,3 +86,19 @@ impl Process<Internal> {
     }
 }
 impl SigScan for Process<Internal> {}
+impl ProcessUtils for Process<External> {
+    #[instrument]
+    fn get_name(&self) -> String {
+        std::fs::read_to_string("/proc/self/comm").unwrap()
+    }
+    #[instrument]
+    fn get_module(
+        &self,
+        name: &str,
+    ) -> Result<crate::structures::modules::Module<Self>, crate::structures::modules::ModuleError>
+    where
+        Self: Sized + SigScan,
+    {
+        todo!()
+    }
+}
