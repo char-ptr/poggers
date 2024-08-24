@@ -6,6 +6,7 @@ use crate::structures::{
 /// The platform specific data for a process
 pub type PlatformData = create_snapshot::STProcess;
 
+//emwo:
 impl ProcList for ProcessList {
     fn get_iter() -> Result<
         impl Iterator<Item = crate::structures::proc_list::ProcessListEntry>,
