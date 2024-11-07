@@ -134,6 +134,15 @@ impl Process<External> {
         }
     }
 
+    fn get_path_from_hndl(hndl: HANDLE) -> PathBuf {
+        let mut name_buf = [0u16; 256];
+        let mut write_size = name_buf.len() as u32;
+        let pwstr = PWSTR::from_raw(name_buf.as_mut_ptr());
+        let _ =
+            unsafe { QueryFullProcessImageNameW(hndl, PROCESS_NAME_WIN32, pwstr, &mut write_size) };
+        let str = unsafe { pwstr.to_string().unwrap() };
+        Path::new(&str).to_path_buf()
+    }
     fn get_name_from_hndl(hndl: HANDLE) -> String {
         let mut name_buf = [0u16; 256];
         let mut write_size = name_buf.len() as u32;
@@ -164,6 +173,10 @@ impl Process<External> {
             ProcessError::UnableToFindProcess(U32OrString::String(name.to_string())),
         )?;
         Self::find_by_pid(res.id)
+    }
+    /// get the path of the process
+    pub fn get_path(&self) -> PathBuf {
+        Self::get_path_from_hndl(HANDLE(self.handl))
     }
 
     // pub function to allow people to make a process from an existing handle. really not very safe or recommended, but it's here if they're sure they want to use it
