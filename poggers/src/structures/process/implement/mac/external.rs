@@ -9,6 +9,7 @@ use mach::{
     vm_statistics::VM_FLAGS_ANYWHERE,
     vm_types::{mach_vm_address_t, mach_vm_size_t},
 };
+use tracing::instrument;
 
 use crate::structures::process::Proc;
 use crate::traits::MemError::WriteFailure;

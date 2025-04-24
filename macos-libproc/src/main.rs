@@ -1,8 +1,9 @@
-use std::ffi::{c_void, CStr, CString};
+use std::ffi::{c_void, CStr};
 
 #[cfg(target_os = "macos")]
 use macos_libproc::proc_name;
 
+#[cfg(not(target_os = "macos"))]
 fn main() {}
 #[cfg(target_os = "macos")]
 fn main() {

@@ -26,6 +26,6 @@ mod tests {
     fn test_list() {
         crate::testing::init_tracing();
         let list = ProcessList::get_list().unwrap();
-        // println!("{:#?}", list);
+        println!("{:#?}", list);
     }
 }
